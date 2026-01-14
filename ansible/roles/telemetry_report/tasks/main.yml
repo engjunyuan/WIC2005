@@ -1,0 +1,97 @@
+---
+- name: Set report timestamp
+  set_fact:
+    report_timestamp: "{{ lookup('pipe', 'date -u +%F') }}"
+    report_title: "Telemetry Report"
+
+- name: Create report directory
+  file:
+    path: "{{ playbook_dir }}/../reports"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Collect hostname
+  raw: hostname
+  register: report_hostname
+  changed_when: false
+
+- name: Collect uptime
+  raw: uptime
+  register: report_uptime
+  changed_when: false
+
+- name: Collect load average
+  raw: cat /proc/loadavg
+  register: report_loadavg
+  changed_when: false
+
+- name: Collect memory summary
+  raw: "grep -E 'MemTotal|MemFree|MemAvailable' /proc/meminfo"
+  register: report_meminfo
+  changed_when: false
+
+- name: Collect disk usage
+  raw: df -h /
+  register: report_disk
+  changed_when: false
+
+- name: Collect interface summary
+  raw: ip -br addr
+  register: report_ip_brief
+  changed_when: false
+
+- name: Collect interface counters
+  raw: ip -s link
+  register: report_ip_counters
+  changed_when: false
+
+- name: Collect OSPF neighbors (routers)
+  raw: vtysh -c 'show ip ospf neighbor'
+  register: report_ospf
+  changed_when: false
+  when: "'routers' in group_names"
+
+- name: Collect VLANs (switches)
+  raw: cat /config/vlans.conf
+  register: report_vlans
+  changed_when: false
+  when: "'switches' in group_names"
+  ignore_errors: true
+
+- name: Tail routing logs (routers)
+  raw: |
+    if [ -f /var/log/frr/frr.log ]; then
+      tail -n {{ telemetry.log_tail_lines | default(50) }} /var/log/frr/frr.log
+    else
+      echo "n/a (missing /var/log/frr/frr.log)"
+    fi
+  register: report_frr_log
+  changed_when: false
+  failed_when: false
+  when: "'routers' in group_names"
+
+- name: Tail system logs (switches)
+  raw: |
+    if [ -f /var/log/messages ]; then
+      tail -n {{ telemetry.log_tail_lines | default(50) }} /var/log/messages
+    else
+      echo "n/a (missing /var/log/messages)"
+    fi
+  register: report_syslog
+  changed_when: false
+  failed_when: false
+  when: "'switches' in group_names"
+
+- name: Ping targets
+  raw: "ping -c 3 {{ item }}"
+  loop: "{{ telemetry.ping_targets | default([]) }}"
+  register: report_pings
+  changed_when: false
+  failed_when: false
+
+- name: Write formatted report
+  template:
+    src: report.md.j2
+    dest: "{{ playbook_dir }}/../reports/{{ inventory_hostname }}_{{ report_timestamp | regex_replace('[-:]', '') }}.md"
+  delegate_to: localhost

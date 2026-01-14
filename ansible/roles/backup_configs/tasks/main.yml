@@ -1,0 +1,38 @@
+---
+- name: Set backup date stamp
+  set_fact:
+    backup_date: "{{ lookup('pipe', 'date +%F') }}"
+
+- name: Create backup directory
+  file:
+    path: "{{ backup_dir }}"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Backup router configurations
+  raw: vtysh -c 'show running-config'
+  register: router_backup
+  changed_when: false
+  when: "'routers' in group_names"
+
+- name: Save router backup
+  copy:
+    content: "{{ router_backup.stdout }}"
+    dest: "{{ backup_dir }}/{{ inventory_hostname }}_{{ backup_date }}.conf"
+  delegate_to: localhost
+  when: "'routers' in group_names and router_backup is defined"
+
+- name: Backup switch configurations
+  raw: cat /config/vlans.conf
+  register: switch_backup
+  changed_when: false
+  when: "'switches' in group_names"
+  ignore_errors: yes
+
+- name: Save switch backup
+  copy:
+    content: "{{ switch_backup.stdout }}"
+    dest: "{{ backup_dir }}/{{ inventory_hostname }}_{{ backup_date }}.conf"
+  delegate_to: localhost
+  when: "'switches' in group_names and switch_backup is defined"

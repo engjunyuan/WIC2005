@@ -1,0 +1,71 @@
+---
+# ============================================================
+# POST-LAB AUTOMATION PLAYBOOK
+# Runs post-lab operations with flexible tag selection
+# Includes validation, monitoring, security, and telemetry
+# ============================================================
+# Usage:
+#   # Run all operations
+#   ansible-playbook -i inventory.yml operations.yml -v
+#
+#   # Run specific operations using tags
+#   ansible-playbook -i inventory.yml operations.yml --tags validation -v
+#   ansible-playbook -i inventory.yml operations.yml --tags health -v
+#   ansible-playbook -i inventory.yml operations.yml --tags security -v
+#   ansible-playbook -i inventory.yml operations.yml --tags telemetry -v
+#
+#   # Combine multiple tags
+#   ansible-playbook -i inventory.yml operations.yml --tags "health,security" -v
+# ============================================================
+
+# ============================================================
+# POST-DEPLOYMENT VALIDATION
+# ============================================================
+
+- name: Validate post-deployment configurations
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - group_vars_all.yml
+  roles:
+    - role: post_deployment_validation
+      tags: [validation, post_lab, testing, default]
+
+# ============================================================
+# TELEMETRY COLLECTION & REPORTING
+# ============================================================
+
+- name: Collect telemetry and generate reports
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - group_vars_all.yml
+  roles:
+    - role: telemetry_report
+      tags: [telemetry, reporting, post_lab, default]
+
+# ============================================================
+# HEALTH MONITORING
+# ============================================================
+
+- name: Monitor device health and stability
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - group_vars_all.yml
+  roles:
+    - role: health_monitoring
+      tags: [health, monitoring, post_lab, default]
+
+# ============================================================
+# SECURITY VERIFICATION
+# ============================================================
+
+- name: Verify security configurations
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - group_vars_all.yml
+  roles:
+    - role: security_verification
+      tags: [security, compliance, post_lab, default]

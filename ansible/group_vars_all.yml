@@ -1,0 +1,43 @@
+# Network topology and automation variables
+network:
+  domain: lab.local
+  ntp_server: pool.ntp.org
+  dns_servers:
+    - 8.8.8.8
+    - 1.1.1.1
+  nat_server_ip: 10.0.1.254
+
+telemetry:
+  ping_targets:
+    - 172.199.0.10
+    - 172.199.0.11
+  log_tail_lines: 50
+
+# OSPF configuration
+ospf:
+  process_id: 1
+  router_id_base: 10.255.255
+
+# BGP configuration (optional)
+bgp:
+  asn: 65000
+
+# Default credentials
+device_credentials:
+  routers:
+    username: root
+    password: router123
+  switches:
+    username: root
+    password: switch123
+
+# Automation tasks to perform
+automation_tasks:
+  - configure_hostname
+  - configure_interfaces
+  - configure_routing
+  - configure_vlans
+  - backup_configs
+
+# Local path for backups on the controller
+backup_dir: "{{ playbook_dir }}/../backups"

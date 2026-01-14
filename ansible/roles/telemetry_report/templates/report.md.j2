@@ -1,0 +1,105 @@
+# {{ report_title | default('Device Report') }}: {{ inventory_hostname }}
+
+**Report Time:** {{ report_timestamp | default('n/a') }}
+
+---
+
+## System Overview
+
+| Field | Value |
+| --- | --- |
+| Hostname | {{ report_hostname.stdout | default('n/a') }} |
+| Uptime | {{ report_uptime.stdout | default('n/a') }} |
+| Load Average | {{ report_loadavg.stdout | default('n/a') }} |
+
+{% if report_meminfo is defined %}
+## Memory Summary
+
+```
+{{ report_meminfo.stdout | default('n/a') }}
+```
+{% endif %}
+
+{% if report_disk is defined %}
+## Disk Usage
+
+```
+{{ report_disk.stdout | default('n/a') }}
+```
+{% endif %}
+
+{% if report_ip_brief is defined %}
+## Interfaces (Brief)
+
+```
+{{ report_ip_brief.stdout | default('n/a') }}
+```
+{% endif %}
+
+{% if report_ip_counters is defined %}
+## Interface Counters
+
+```
+{{ report_ip_counters.stdout | default('n/a') }}
+```
+{% endif %}
+
+{% if report_ospf is defined %}
+## OSPF Neighbors
+
+```
+{{ report_ospf.stdout | default('n/a') }}
+```
+{% endif %}
+
+{% if report_vlans is defined %}
+## VLANs
+
+```
+{{ report_vlans.stdout | default('n/a') }}
+```
+{% endif %}
+
+{% if report_bridge is defined %}
+## Bridge Status
+
+```
+{{ report_bridge.stdout | default('n/a') }}
+```
+{% endif %}
+
+{% if report_frr_log is defined %}
+## Routing Logs (Tail)
+
+```
+{{ report_frr_log.stdout | default('n/a') }}
+```
+{% endif %}
+
+{% if report_syslog is defined %}
+## System Logs (Tail)
+
+```
+{{ report_syslog.stdout | default('n/a') }}
+```
+{% endif %}
+
+{% if report_pings is defined and report_pings.results is defined %}
+## Ping Results
+
+{% for item in report_pings.results %}
+### Target: {{ item.item }}
+
+```
+{{ item.stdout | default(item.stderr | default('n/a')) }}
+```
+{% endfor %}
+{% endif %}
+
+{% if report_motd is defined %}
+## Maintenance Actions
+
+| Action | Result |
+| --- | --- |
+| Update MOTD | {{ report_motd.stdout | default('n/a') }} |
+{% endif %}

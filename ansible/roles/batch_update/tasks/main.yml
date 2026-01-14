@@ -1,0 +1,34 @@
+---
+- name: Update DNS resolver configuration
+  raw: |
+    tmp="/tmp/resolv.conf.new"
+    cat > "$tmp" <<'EOF'
+    search {{ network.domain }}
+    {% for server in network.dns_servers %}
+    nameserver {{ server }}
+    {% endfor %}
+    EOF
+    if [ -f /etc/resolv.conf ] && cmp -s "$tmp" /etc/resolv.conf; then
+      echo "UNCHANGED"
+    else
+      cat "$tmp" > /etc/resolv.conf
+      echo "CHANGED"
+    fi
+    rm -f "$tmp"
+  register: resolv_update
+  changed_when: "'CHANGED' in resolv_update.stdout"
+
+- name: Update NAT server entry in hosts file
+  raw: |
+    tmp="/tmp/hosts.updated"
+    grep -vE '(^|\\s)nat-gateway(\\s|$)' /etc/hosts > "$tmp"
+    echo "{{ network.nat_server_ip }} nat-gateway" >> "$tmp"
+    if [ -f /etc/hosts ] && cmp -s "$tmp" /etc/hosts; then
+      echo "UNCHANGED"
+    else
+      cat "$tmp" > /etc/hosts
+      echo "CHANGED"
+    fi
+    rm -f "$tmp"
+  register: hosts_update
+  changed_when: "'CHANGED' in hosts_update.stdout"

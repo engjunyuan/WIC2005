@@ -1,0 +1,39 @@
+---
+- name: Wait for Provisioner API
+  uri:
+    url: http://localhost:{{ provisioner.port }}/devices
+    method: GET
+    status_code: 200
+  register: prov_health
+  retries: 20
+  delay: 3
+  until: prov_health.status == 200
+
+- name: Provision devices from new_branch inventory group
+  uri:
+    url: http://localhost:{{ provisioner.port }}/devices
+    method: POST
+    body_format: json
+    body:
+      hostname: "{{ item }}"
+      device_type: "{{ hostvars[item].device_type | default('router') }}"
+      mgmt_ip: "{{ hostvars[item].mgmt_ip | default(omit) }}"
+      wan_ip: "{{ hostvars[item].wan_ip | default(omit) }}"
+      lan_ip: "{{ hostvars[item].lan_ip | default(omit) }}"
+      ospf_area: "{{ hostvars[item].ospf_area | default(omit) }}"
+      vlans: "{{ hostvars[item].vlans | default(omit) }}"
+      ansible_host: "{{ hostvars[item].ansible_host | default(omit) }}"
+      ansible_port: "{{ hostvars[item].ansible_port | default(omit) }}"
+    status_code: [200, 201]
+  loop: "{{ groups['new_branch'] | default([]) }}"
+  when: groups['new_branch'] is defined and groups['new_branch'] | length > 0
+
+- name: Provision devices from explicit vars (legacy)
+  uri:
+    url: http://localhost:{{ provisioner.port }}/devices
+    method: POST
+    body_format: json
+    body: "{{ item | to_json }}"
+    status_code: [200, 201]
+  loop: "{{ devices }}"
+  when: devices is defined and devices | length > 0

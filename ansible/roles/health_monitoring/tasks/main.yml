@@ -1,0 +1,202 @@
+---
+# Health Monitoring Role
+# Continuous monitoring and alerting for network devices
+
+- name: Set monitoring timestamp
+  set_fact:
+    monitoring_timestamp: "{{ lookup('pipe', 'date +%s') }}"
+  run_once: true
+  delegate_to: localhost
+
+# ============================================================
+# INTERFACE HEALTH MONITORING
+# ============================================================
+
+- name: Get interface statistics on all devices
+  raw: "ip -s link show"
+  register: interface_stats
+  changed_when: false
+  ignore_errors: yes
+
+- name: Check for interface errors or dropped packets
+  raw: "ip -s link | grep -A1 'RX:' | grep errors"
+  register: interface_errors
+  changed_when: false
+  ignore_errors: yes
+
+- name: Verify all interfaces are UP
+  raw: "ip link | grep -E '^[0-9]+:' | grep -v 'DOWN'"
+  register: interfaces_up
+  changed_when: false
+  ignore_errors: yes
+
+# ============================================================
+# ROUTING HEALTH MONITORING (ROUTERS)
+# ============================================================
+
+- name: Verify routing process is stable on routers
+  raw: "vtysh -c 'show ip route summary'"
+  register: route_summary
+  changed_when: false
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+- name: Check OSPF link state database size
+  raw: "vtysh -c 'show ip ospf database summary'"
+  register: ospf_lsdb
+  changed_when: false
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+- name: Monitor OSPF neighbor stability
+  raw: "vtysh -c 'show ip ospf neighbor detail'"
+  register: ospf_neighbor_detail
+  changed_when: false
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+- name: Check for routing flaps (FRR log analysis)
+  raw: "tail -100 /var/log/frr/frr.log | grep -i 'neighbor\\|change\\|flap' || echo 'No flaps detected'"
+  register: routing_flaps
+  changed_when: false
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+# ============================================================
+# SWITCH HEALTH MONITORING
+# ============================================================
+
+- name: Verify VLAN integrity on switches
+  raw: "brctl show"
+  register: vlan_integrity
+  changed_when: false
+  when: "'switches' in group_names"
+  ignore_errors: yes
+
+- name: Check bridge forwarding database
+  raw: "brctl showmacs br0 2>/dev/null || echo 'Bridge not configured'"
+  register: bridge_fdb
+  changed_when: false
+  when: "'switches' in group_names"
+  ignore_errors: yes
+
+# ============================================================
+# SYSTEM RESOURCE MONITORING
+# ============================================================
+
+- name: Monitor CPU usage
+  raw: "top -bn1 | head -n 3"
+  register: cpu_usage
+  changed_when: false
+  ignore_errors: yes
+
+- name: Monitor memory usage
+  raw: "free -h"
+  register: memory_usage
+  changed_when: false
+  ignore_errors: yes
+
+- name: Monitor disk I/O statistics
+  raw: "iostat -x 1 2 2>/dev/null || df -h"
+  register: disk_io
+  changed_when: false
+  ignore_errors: yes
+
+- name: Check for device errors in dmesg
+  raw: "dmesg | tail -20 | grep -i 'error\\|warning\\|critical' || echo 'No critical errors found'"
+  register: kernel_errors
+  changed_when: false
+  ignore_errors: yes
+
+# ============================================================
+# PROCESS HEALTH MONITORING
+# ============================================================
+
+- name: Monitor FRR daemon processes on routers
+  raw: "ps aux | grep -E '(zebra|ospfd|bgpd|ripd|staticd)' | grep -v grep | wc -l"
+  register: frr_process_count
+  changed_when: false
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+- name: Check for zombie processes
+  raw: "ps aux | grep 'Z' | grep -v grep || echo 'No zombie processes'"
+  register: zombie_check
+  changed_when: false
+  ignore_errors: yes
+
+# ============================================================
+# CONNECTIVITY HEALTH MONITORING
+# ============================================================
+
+- name: Test connectivity to known devices
+  raw: "ping -c 1 {{ hostvars[item].ansible_host }} 2>/dev/null && echo 'OK' || echo 'FAILED'"
+  register: connectivity_test
+  changed_when: false
+  with_items: "{{ groups.get('routers', [])[:2] }}"
+  ignore_errors: yes
+
+- name: Check DNS resolution health
+  raw: "nslookup google.com 8.8.8.8 2>/dev/null | grep 'Name:' && echo 'DNS OK' || echo 'DNS FAILED'"
+  register: dns_health
+  changed_when: false
+  ignore_errors: yes
+
+# ============================================================
+# DEVICE UPTIME MONITORING
+# ============================================================
+
+- name: Collect device uptime
+  raw: "uptime"
+  register: device_uptime
+  changed_when: false
+  ignore_errors: yes
+
+- name: Check system boot time
+  raw: "stat /proc/1/exe | grep Access | head -1"
+  register: boot_time
+  changed_when: false
+  ignore_errors: yes
+
+# ============================================================
+# GENERATE HEALTH REPORT
+# ============================================================
+
+- name: Create health monitoring report directory
+  file:
+    path: "{{ playbook_dir }}/../reports/health"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Generate health monitoring report
+  template:
+    src: health_report.md.j2
+    dest: "{{ playbook_dir }}/../reports/health/{{ ansible_date_time }}_health_report.md"
+  vars:
+    ansible_date_time: "{{ lookup('pipe', 'date -u +%Y%m%d_%H%M%S') }}"
+  delegate_to: localhost
+  run_once: true
+  ignore_errors: yes
+
+- name: Display health monitoring summary
+  debug:
+    msg: |
+      ========================================
+      HEALTH MONITORING SUMMARY
+      ========================================
+      Timestamp: {{ ansible_date_time }}
+      
+      Metrics Collected:
+        ✓ Interface Statistics
+        ✓ Routing Health (OSPF)
+        ✓ VLAN/Bridge Integrity
+        ✓ System Resources (CPU, Memory, Disk)
+        ✓ Process Health
+        ✓ Connectivity Tests
+        ✓ Device Uptime
+        
+      Report Location: reports/health/
+      ========================================
+  run_once: true
+  ignore_errors: yes

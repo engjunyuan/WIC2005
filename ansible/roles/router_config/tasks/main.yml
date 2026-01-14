@@ -1,0 +1,74 @@
+---
+- name: Wait for SSH to be available
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ ansible_port | default(22) }}"
+    timeout: 60
+  delegate_to: localhost
+
+- name: Set hostname
+  raw: |
+    current="$(cat /etc/hostname 2>/dev/null || true)"
+    if [ "$current" = "{{ inventory_hostname }}" ]; then
+      echo "UNCHANGED"
+    else
+      hostname "{{ inventory_hostname }}"
+      echo "{{ inventory_hostname }}" > /etc/hostname
+      echo "CHANGED"
+    fi
+  register: hostname_update
+  changed_when: "'CHANGED' in hostname_update.stdout"
+
+- name: Push FRR config (OSPF)
+  raw: |
+    tmp="/tmp/frr.conf.new"
+    cat > "$tmp" <<'EOF'
+    ! FRR OSPF baseline
+    hostname {{ inventory_hostname }}
+    log file /var/log/frr/frr.log
+    service integrated-vtysh-config
+
+    router ospf
+      network 0.0.0.0/0 area {{ ospf_area }}
+    !
+    line vty
+    EOF
+    need_change=0
+    if [ ! -f /etc/frr/frr.conf ] || ! cmp -s "$tmp" /etc/frr/frr.conf; then
+      need_change=1
+    fi
+    current_meta="$(stat -c '%U:%G %a' /etc/frr/frr.conf 2>/dev/null || echo missing)"
+    if [ "$current_meta" != "frr:frr 640" ]; then
+      need_change=1
+    fi
+    if [ "$need_change" -eq 1 ]; then
+      cat "$tmp" > /etc/frr/frr.conf
+      chown frr:frr /etc/frr/frr.conf
+      chmod 640 /etc/frr/frr.conf
+      echo "CHANGED"
+    else
+      echo "UNCHANGED"
+    fi
+    rm -f "$tmp"
+  register: frr_config
+  changed_when: "'CHANGED' in frr_config.stdout"
+  when: "'routers' in group_names"
+
+- name: Restart FRR to apply config
+  raw: |
+    killall watchfrr 2>/dev/null || true
+    pkill zebra bgpd ripd ospfd staticd mgmtd 2>/dev/null || true
+    rm -f /var/run/frr/*.pid
+    /usr/lib/frr/frrinit.sh start
+  when: "'routers' in group_names and frr_config is changed"
+
+- name: Show running config
+  raw: vtysh -c 'show running-config'
+  register: running_config
+  changed_when: false
+  when: "'routers' in group_names"
+
+- name: Display router config
+  debug:
+    var: running_config.stdout_lines
+  when: "'routers' in group_names and running_config is defined"

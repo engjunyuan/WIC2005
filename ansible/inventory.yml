@@ -1,0 +1,53 @@
+all:
+  children:
+    routers:
+      hosts:
+        router1:
+          ansible_host: 127.0.0.1
+          ansible_port: 2201
+          device_type: router
+          mgmt_ip: 172.199.0.10
+          wan_ip: 10.0.1.2
+          ospf_area: 0.0.0.0
+        router2:
+          ansible_host: 127.0.0.1
+          ansible_port: 2202
+          device_type: router
+          mgmt_ip: 172.199.0.11
+          wan_ip: 10.0.1.3
+          lan_ip: 192.168.11.10
+          ospf_area: 0.0.0.0
+        router3:
+          ansible_host: 127.0.0.1
+          ansible_port: 2203
+          device_type: router
+          mgmt_ip: 172.199.0.12
+          wan_ip: 10.0.1.4
+          lan_ip: 192.168.11.11
+          ospf_area: 0.0.0.0
+    switches:
+      hosts:
+        switch1:
+          ansible_host: 127.0.0.1
+          ansible_port: 2221
+          device_type: switch
+          mgmt_ip: 172.199.0.20
+          vlans:
+            - { id: 10, name: "Management" }
+            - { id: 20, name: "Data" }
+            - { id: 30, name: "Voice" }
+        switch2:
+          ansible_host: 127.0.0.1
+          ansible_port: 2222
+          device_type: switch
+          mgmt_ip: 172.199.0.21
+          vlans:
+            - { id: 10, name: "Management" }
+            - { id: 40, name: "Servers" }
+
+  vars:
+    ansible_user: root
+    ansible_ssh_pass: netdev123
+    ansible_connection: ssh
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'

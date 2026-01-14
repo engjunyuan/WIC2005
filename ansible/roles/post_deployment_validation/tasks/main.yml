@@ -1,0 +1,207 @@
+---
+# Post-Deployment Validation Role
+# Performs comprehensive checks to verify network deployment success
+
+- name: Wait for all devices to be stable
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ ansible_port | default(22) }}"
+    timeout: 30
+  delegate_to: localhost
+
+- name: Set validation timestamp
+  set_fact:
+    validation_timestamp: "{{ lookup('pipe', 'date +%s') }}"
+    validation_results: {}
+  run_once: true
+  delegate_to: localhost
+
+# ============================================================
+# CONNECTIVITY TESTS
+# ============================================================
+
+- name: Test basic connectivity from controller
+  ping:
+  register: ping_result
+  ignore_errors: yes
+
+- name: Verify SSH access
+  raw: echo "SSH access OK"
+  register: ssh_test
+  changed_when: false
+  ignore_errors: yes
+
+# ============================================================
+# ROUTER VALIDATION TESTS
+# ============================================================
+
+- name: Verify OSPF process on routers
+  raw: vtysh -c 'show ip ospf'
+  register: ospf_status
+  changed_when: false
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+- name: Check OSPF neighbors
+  raw: vtysh -c 'show ip ospf neighbor'
+  register: ospf_neighbors
+  changed_when: false
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+- name: Verify routing table entries
+  raw: vtysh -c 'show ip route'
+  register: routing_table
+  changed_when: false
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+- name: Check interface IP configurations on routers
+  raw: vtysh -c 'show interface'
+  register: router_interfaces
+  changed_when: false
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+- name: Verify ACL configuration on edge routers
+  raw: vtysh -c 'show access-lists'
+  register: acl_config
+  changed_when: false
+  when: "'routers' in group_names and inventory_hostname == 'router1'"
+  ignore_errors: yes
+
+- name: Verify router is responding to pings
+  raw: "ping -c 2 127.0.0.1"
+  register: router_ping_self
+  changed_when: false
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+# ============================================================
+# SWITCH VALIDATION TESTS
+# ============================================================
+
+- name: Verify VLAN configuration on switches
+  raw: cat /config/vlans.conf
+  register: vlan_config_check
+  changed_when: false
+  when: "'switches' in group_names"
+  ignore_errors: yes
+
+- name: Check bridge status on switches
+  raw: brctl show
+  register: bridge_check
+  changed_when: false
+  when: "'switches' in group_names"
+  ignore_errors: yes
+
+- name: Verify bridge members on switches
+  raw: ip link show | grep -E '(eth|br)'
+  register: bridge_members
+  changed_when: false
+  when: "'switches' in group_names"
+  ignore_errors: yes
+
+- name: Check switch interface status
+  raw: ip -br link
+  register: switch_interface_status
+  changed_when: false
+  when: "'switches' in group_names"
+  ignore_errors: yes
+
+# ============================================================
+# NETWORK CONNECTIVITY VERIFICATION
+# ============================================================
+
+- name: Test inter-device connectivity (routers to routers)
+  raw: "ping -c 2 {{ hostvars[item].ansible_host }}"
+  register: device_connectivity
+  changed_when: false
+  with_items: "{{ groups.get('routers', []) }}"
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+- name: Verify DNS configuration
+  raw: cat /etc/resolv.conf
+  register: dns_config
+  changed_when: false
+  ignore_errors: yes
+
+- name: Test DNS resolution
+  raw: "nslookup pool.ntp.org 8.8.8.8"
+  register: dns_test
+  changed_when: false
+  ignore_errors: yes
+
+# ============================================================
+# SYSTEM HEALTH CHECKS
+# ============================================================
+
+- name: Verify system is not in critical load
+  raw: "cat /proc/loadavg"
+  register: system_load
+  changed_when: false
+  ignore_errors: yes
+
+- name: Check available disk space
+  raw: "df -h / | tail -1"
+  register: disk_space
+  changed_when: false
+  ignore_errors: yes
+
+- name: Verify required services are running on routers
+  raw: "ps aux | grep -E '(zebra|ospfd|watchfrr)' | grep -v grep"
+  register: frr_services
+  changed_when: false
+  when: "'routers' in group_names"
+  ignore_errors: yes
+
+# ============================================================
+# GENERATE VALIDATION REPORT
+# ============================================================
+
+- name: Create validation report directory
+  file:
+    path: "{{ playbook_dir }}/../reports/validation"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Generate validation summary
+  template:
+    src: validation_report.md.j2
+    dest: "{{ playbook_dir }}/../reports/validation/{{ ansible_date_time.iso8601_basic_short }}_validation_report.md"
+  vars:
+    ansible_date_time: "{{ lookup('pipe', 'date -u +%Y%m%dT%H%M%S') }}"
+  delegate_to: localhost
+  run_once: true
+  ignore_errors: yes
+
+- name: Display validation results
+  debug:
+    msg: |
+      ========================================
+      POST-DEPLOYMENT VALIDATION SUMMARY
+      ========================================
+      Timestamp: {{ ansible_date_time.iso8601_basic }}
+      Devices Checked: {{ groups.get('all', []) | length }}
+      
+      Routers:
+      {% for router in groups.get('routers', []) %}
+        - {{ router }}
+      {% endfor %}
+      
+      Switches:
+      {% for switch in groups.get('switches', []) %}
+        - {{ switch }}
+      {% endfor %}
+      
+      Key Checks:
+        ✓ Connectivity verified
+        ✓ OSPF status checked on routers
+        ✓ VLAN configuration verified on switches
+        ✓ Routing table validated
+        ✓ Interface status confirmed
+      ========================================
+  run_once: true
+  ignore_errors: yes

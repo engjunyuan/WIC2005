@@ -1,0 +1,147 @@
+version: "3.8"
+
+services:
+  # Router 1 - Edge router with FRRouting
+  router1:
+    image: network-device-router:latest
+    hostname: router1
+    container_name: router1
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - DEVICE_ID=router1
+    networks:
+      mgmt:
+        ipv4_address: 172.199.0.10
+      wan:
+        ipv4_address: 10.0.1.2
+    ports:
+      - "2201:22"
+    volumes:
+      - ./configs/router-common/daemons:/etc/frr/daemons:rw
+      - ./configs/router-common/vtysh.conf:/etc/frr/vtysh.conf:rw
+      - ./configs/router1/frr.conf:/etc/frr/frr.conf:rw
+
+  # Router 2 - Core router
+  router2:
+    image: network-device-router:latest
+    hostname: router2
+    container_name: router2
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - DEVICE_ID=router2
+    networks:
+      mgmt:
+        ipv4_address: 172.199.0.11
+      wan:
+        ipv4_address: 10.0.1.3
+      lan:
+        ipv4_address: 192.168.11.10
+    ports:
+      - "2202:22"
+    volumes:
+      - ./configs/router-common/daemons:/etc/frr/daemons:rw
+      - ./configs/router-common/vtysh.conf:/etc/frr/vtysh.conf:rw
+      - ./configs/router2/frr.conf:/etc/frr/frr.conf:rw
+
+  # Switch 1 - Access layer with VLANs
+  switch1:
+    image: network-device-switch:latest
+    hostname: switch1
+    container_name: switch1
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - DEVICE_ID=switch1
+    networks:
+      mgmt:
+        ipv4_address: 172.199.0.20
+      lan:
+        ipv4_address: 192.168.11.20
+    ports:
+      - "2221:22"
+    volumes:
+      - ./configs/switch1:/config:rw
+
+  # Switch 2 - Distribution layer
+  switch2:
+    image: network-device-switch:latest
+    hostname: switch2
+    container_name: switch2
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - DEVICE_ID=switch2
+    networks:
+      mgmt:
+        ipv4_address: 172.199.0.21
+      lan:
+        ipv4_address: 192.168.11.21
+    ports:
+      - "2222:22"
+    volumes:
+      - ./configs/switch2:/config:rw
+
+  # Router 3 - Core backbone router
+  router3:
+    image: network-device-router:latest
+    hostname: router3
+    container_name: router3
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - DEVICE_ID=router3
+    networks:
+      mgmt:
+        ipv4_address: 172.199.0.12
+      wan:
+        ipv4_address: 10.0.1.4
+      lan:
+        ipv4_address: 192.168.11.11
+    ports:
+      - "2203:22"
+    volumes:
+      - ./configs/router-common/daemons:/etc/frr/daemons:rw
+      - ./configs/router-common/vtysh.conf:/etc/frr/vtysh.conf:rw
+      - ./configs/router3/frr.conf:/etc/frr/frr.conf:rw
+
+networks:
+  mgmt:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.199.0.0/24
+  wan:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.1.0/24
+  lan:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.11.0/24
+
+volumes:
+  configs:
+
+    # Network simulation lab for TechMart Retail Chain Expansion
+    # Simulates WAN between regional distribution centers and branch stores
+    # Demonstrates network automation for:
+    # - VLAN configuration (access & trunk ports)
+    # - OSPFv2 multi-area routing
+    # - ACLs for security policies
+    # - NAT for branch office connectivity
+    # - IPv4 and routing protocols
+    #
+    # Topology: 3 Distribution Center Routers + 2 Branch Access Switches
+    # 5 total network devices as required

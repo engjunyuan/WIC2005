@@ -1,0 +1,60 @@
+---
+- name: Wait for SSH to be available
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ ansible_port | default(22) }}"
+    timeout: 60
+  delegate_to: localhost
+
+- name: Set hostname
+  raw: |
+    current="$(cat /etc/hostname 2>/dev/null || true)"
+    if [ "$current" = "{{ inventory_hostname }}" ]; then
+      echo "UNCHANGED"
+    else
+      hostname "{{ inventory_hostname }}"
+      echo "{{ inventory_hostname }}" > /etc/hostname
+      echo "CHANGED"
+    fi
+  register: hostname_update
+  changed_when: "'CHANGED' in hostname_update.stdout"
+
+- name: Ensure VLAN subinterfaces exist and are bridged (idempotent)
+  raw: |
+    # create vlan link if missing
+    ip link show eth0.{{ item.id }} >/dev/null 2>&1 || ip link add link eth0 name eth0.{{ item.id }} type vlan id {{ item.id }}
+    ip link set eth0.{{ item.id }} up
+    # add to bridge only if not already a member
+    bridge link | grep -q "eth0.{{ item.id }}@" || brctl addif br0 eth0.{{ item.id }}
+  loop: "{{ vlans | default([]) }}"
+  changed_when: false
+  ignore_errors: yes
+
+- name: Save VLAN configuration
+  raw: |
+    tmp="/tmp/vlans.conf.new"
+    cat > "$tmp" <<EOF
+    {% for vlan in vlans | default([]) %}
+    {{ vlan.id }}:{{ vlan.name }}
+    {% endfor %}
+    EOF
+    if [ -f /config/vlans.conf ] && cmp -s "$tmp" /config/vlans.conf; then
+      echo "UNCHANGED"
+    else
+      cat "$tmp" > /config/vlans.conf
+      echo "CHANGED"
+    fi
+    rm -f "$tmp"
+  when: vlans is defined
+  register: vlan_config
+  changed_when: "'CHANGED' in vlan_config.stdout"
+
+- name: Show bridge status
+  raw: brctl show
+  register: bridge_status
+  changed_when: false
+
+- name: Display bridge config
+  debug:
+    var: bridge_status.stdout_lines
+  when: bridge_status is defined
