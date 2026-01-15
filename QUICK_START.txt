@@ -19,16 +19,14 @@ NEW PLAYBOOK STRUCTURE (2 PLAYBOOKS)
 
 2. OPERATIONS PLAYBOOK (POST-LAB WITH TAG SELECTION)
    ├─ File: ansible/operations.yml
-   ├─ Roles (selectable with tags):
-   │  ├─ post_deployment_validation (tag: validation)
-   │  ├─ telemetry_report (tag: telemetry)
-   │  ├─ health_monitoring (tag: health)
-   │  └─ security_verification (tag: security)
+   ├─ Role: post_lab_operations
+   ├─ Tasks (selectable with tags):
+   │  ├─ validation (tag: validation)
+   │  ├─ telemetry (tag: telemetry)
+   │  ├─ health (tag: health)
+   │  └─ security (tag: security)
    ├─ Runtime: ~2-3 minutes (all) or ~1 min per tag
    └─ Perfect for: Post-deployment validation & ongoing operations
-
-3. ORIGINAL PLAYBOOK (STILL AVAILABLE)
-   └─ File: ansible/playbook.yml (backward compatible)
 
 ═══════════════════════════════════════════════════════════════════════
 
@@ -69,9 +67,6 @@ OPERATIONS - SPECIFIC TAGS (FLEXIBLE)
 
 OPERATIONS - MULTIPLE TAGS
   ansible-playbook -i inventory.yml operations.yml --tags "health,security" -v
-
-ORIGINAL PLAYBOOK (BACKWARD COMPATIBLE)
-  ansible-playbook -i inventory.yml playbook.yml -v
 
 ═══════════════════════════════════════════════════════════════════════
 
@@ -134,12 +129,11 @@ docker compose exec router1 vtysh -c "show ip ospf neighbor"
 KEY IMPROVEMENTS
 ═══════════════════════════════════════════════════════════════════════
 
-✓ SIMPLER: Use lab_setup.yml instead of playbook.yml
+✓ SIMPLER: Use lab_setup.yml for initial setup
 ✓ FASTER: Lab ready in 1-2 minutes instead of 3-4 minutes
 ✓ CLEARER: Obvious separation of setup vs. operations
 ✓ FLEXIBLE: Run setup, operations, or both separately
 ✓ ORGANIZED: Each playbook has clear purpose
-✓ BACKWARD COMPATIBLE: Original playbook.yml still works
 ✓ MODULAR: Individual roles still available for custom use
 
 ═══════════════════════════════════════════════════════════════════════

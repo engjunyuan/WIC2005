@@ -1,6 +1,5 @@
 ---
-# Health Monitoring Role
-# Continuous monitoring and alerting for network devices
+# Health Monitoring Tasks
 
 - name: Set monitoring timestamp
   set_fact:

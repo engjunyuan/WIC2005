@@ -13,7 +13,6 @@ docker build -t network-device-switch:latest network-devices/switch
 
 - Initialization (lab setup): `ansible/lab_setup.yml`
 - Later automation (post-lab operations): `ansible/operations.yml`
-- Legacy all-in-one flow (kept for compatibility): `ansible/playbook.yml`
 
 ## Playbook: lab_setup.yml (initial lab setup)
 
@@ -35,23 +34,25 @@ ansible-playbook -i inventory.yml lab_setup.yml -v
 
 ## Playbook: operations.yml (post-lab automation)
 
-Runs post-deployment tasks with tag selection. Without tags, all roles run.
+Runs post-deployment tasks with tag selection. Without tags, all tasks run.
 
-### Roles and tags
+### Role and tags
 
-- `post_deployment_validation`
+- `post_lab_operations` (single role; tasks use tags below)
+
+- `validation` (task)
   - Tags: `validation`
   - Does: validation checks and report generation
 
-- `telemetry_report`
+- `telemetry` (task)
   - Tags: `telemetry`
   - Does: telemetry collection and report generation
 
-- `health_monitoring`
+- `health` (task)
   - Tags: `health`
   - Does: health checks and stability monitoring
 
-- `security_verification`
+- `security` (task)
   - Tags: `security`
   - Does: security verification and compliance checks
 
@@ -71,51 +72,4 @@ ansible-playbook -i inventory.yml operations.yml --tags telemetry -v
 Run multiple operations:
 ```bash
 ansible-playbook -i inventory.yml operations.yml --tags "health,security" -v
-```
-
-## Playbook: playbook.yml (legacy all-in-one)
-
-This is the original playbook that combines setup and operations. Use it only if you need the older flow.
-
-### Initial configuration roles
-
-- `router_config`
-  - Tags: `router_config`, `topology_setup`, `deployment`
-  - Does: router OSPF, ACLs, NAT, hostname
-
-- `switch_config`
-  - Tags: `switch_config`, `topology_setup`, `deployment`
-  - Does: VLANs, bridging, hostname
-
-- `batch_update`
-  - Tags: `batch_update`, `topology_setup`, `deployment`
-  - Does: shared settings (DNS/common updates)
-
-- `backup_configs`
-  - Tags: `backup_configs`, `topology_setup`, `deployment`
-  - Does: configuration backups
-
-### Post-deployment roles
-
-- `post_deployment_validation`
-  - Tags: `post_deployment_validation`, `post_deployment`, `testing`
-  - Does: validation checks and report generation
-
-- `telemetry_report`
-  - Tags: `telemetry_report`, `topology_setup`, `post_deployment`
-  - Does: telemetry collection and report generation
-
-### Monitoring roles
-
-- `health_monitoring`
-  - Tags: `health_monitoring`, `monitoring`, `operations`
-  - Does: health checks and stability monitoring
-
-- `security_verification`
-  - Tags: `security_verification`, `security`, `operations`
-  - Does: security verification and compliance checks
-
-Run:
-```bash
-ansible-playbook -i inventory.yml playbook.yml -v
 ```

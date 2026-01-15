@@ -340,11 +340,12 @@ docker compose exec router1 ping -c 2 172.199.0.11
 
 **Benefit:** Simplifies branch network design, reduces IP planning complexity, and maintains centralized IP registry.
 
-### Batch Configuration
+### Full Automation (Setup + Operations)
 
-**Single Command:**
+**Commands:**
 ```bash
-ansible-playbook -i inventory.yml playbook.yml -v
+ansible-playbook -i inventory.yml lab_setup.yml -v
+ansible-playbook -i inventory.yml operations.yml -v
 ```
 
 **What Happens:**
@@ -355,9 +356,9 @@ ansible-playbook -i inventory.yml playbook.yml -v
 5. Applies ACLs to edge routers
 6. Configures NAT on core routers
 7. Backs up all configurations to `/backups/`
-8. **Validates post-deployment configurations** ← NEW
-9. **Performs health monitoring checks** ← NEW
-10. **Verifies security configurations** ← NEW
+8. Validates post-deployment configurations
+9. Performs health monitoring checks
+10. Verifies security configurations
 11. Collects telemetry and generates reports
 
 **Efficiency:** All 5 devices configured in ~2-3 minutes vs. 30+ minutes manual CLI work.
@@ -490,7 +491,7 @@ After initial deployment, comprehensive validation ensures the network meets all
 
 **Purpose:** Automated verification that deployment succeeded.
 
-**Location:** `ansible/roles/post_deployment_validation/tasks/main.yml`
+**Location:** `ansible/roles/post_lab_operations/tasks/validation.yml`
 
 **Automated Checks:**
 
@@ -546,10 +547,7 @@ Key Checks:
 
 ```bash
 # Run only post-deployment validation (skip other stages)
-ansible-playbook -i inventory.yml playbook.yml --tags post_deployment_validation -v
-
-# Or specifically the validation role
-ansible-playbook -i inventory.yml playbook.yml --tags post_deployment_validation -v
+ansible-playbook -i inventory.yml operations.yml --tags validation -v
 ```
 
 ### Testing Checklist
@@ -583,7 +581,7 @@ ansible-playbook -i inventory.yml playbook.yml --tags post_deployment_validation
 
 **Purpose:** Continuous collection of device health metrics and operational status.
 
-**Location:** `ansible/roles/health_monitoring/tasks/main.yml`
+**Location:** `ansible/roles/post_lab_operations/tasks/health.yml`
 
 **Metrics Collected:**
 
@@ -629,10 +627,10 @@ ansible-playbook -i inventory.yml playbook.yml --tags post_deployment_validation
 
 ```bash
 # Run health monitoring role
-ansible-playbook -i inventory.yml playbook.yml --tags health_monitoring -v
+ansible-playbook -i inventory.yml operations.yml --tags health -v
 
-# Or as part of full deployment
-ansible-playbook -i inventory.yml playbook.yml -v
+# Or run all operations
+ansible-playbook -i inventory.yml operations.yml -v
 ```
 
 ### Health Monitoring Interpretation
@@ -663,7 +661,7 @@ ansible-playbook -i inventory.yml playbook.yml -v
 
 **Purpose:** Automated compliance validation of security configurations.
 
-**Location:** `ansible/roles/security_verification/tasks/main.yml`
+**Location:** `ansible/roles/post_lab_operations/tasks/security.yml`
 
 **Security Checks:**
 
@@ -749,10 +747,10 @@ ansible-playbook -i inventory.yml playbook.yml -v
 
 ```bash
 # Run security verification role
-ansible-playbook -i inventory.yml playbook.yml --tags security_verification -v
+ansible-playbook -i inventory.yml operations.yml --tags security -v
 
-# Or as part of full deployment
-ansible-playbook -i inventory.yml playbook.yml -v
+# Or run all operations
+ansible-playbook -i inventory.yml operations.yml -v
 ```
 
 ---
@@ -841,11 +839,13 @@ brctl showmacs br0
 │   │
 │   ├── lab_setup.yml                  # Lab setup playbook (RECOMMENDED)
 │   ├── operations.yml                 # Operations & monitoring with tag selection
-│   ├── playbook.yml                   # Original playbook (backward compatible)
 │   │
 │   └── roles/                         # Modular automation tasks
 │       ├── lab_setup/                 # Consolidated setup role
 │       │   └── tasks/main.yml         # Hostname, OSPF, VLANs, DNS, NAT, backups
+│       ├── post_lab_operations/        # Post-lab reports (validation, health, security, telemetry)
+│       │   ├── tasks/                  # Split by task type
+│       │   └── templates/              # Report templates
 │       ├── router_config/
 │       │   ├── tasks/main.yml         # OSPF, ACLs, NAT, hostname
 │       │   └── templates/
@@ -857,22 +857,6 @@ brctl showmacs br0
 │       │   └── templates/
 │       ├── backup_configs/
 │       │   └── tasks/main.yml         # Config backup automation
-│       ├── post_deployment_validation/
-│       │   ├── tasks/main.yml         # Validation tests
-│       │   └── templates/
-│       │       └── validation_report.md.j2
-│       ├── health_monitoring/
-│       │   ├── tasks/main.yml         # Health checks
-│       │   └── templates/
-│       │       └── health_report.md.j2
-│       ├── security_verification/
-│       │   ├── tasks/main.yml         # Security audit
-│       │   └── templates/
-│       │       └── security_report.md.j2
-│       ├── telemetry_report/
-│       │   ├── tasks/main.yml         # Telemetry collection
-│       │   └── templates/
-│       │       └── report.md.j2
 │       └── provision_devices/
 │           └── tasks/main.yml         # Device provisioning (optional)
 ├── network-devices/
@@ -938,7 +922,7 @@ ansible-playbook -i inventory.yml lab_setup.yml -v
 # Run post-deployment operations (with flexible tag selection)
 ansible-playbook -i inventory.yml operations.yml -v
 ```
-**Runs:** Validation, Health, Security, Telemetry roles
+**Runs:** `post_lab_operations` role (validation, health, security, telemetry tasks)
 **Tasks:** Post-deployment checks, monitoring, compliance, reporting
 **Time:** 2-3 minutes for all tags, ~1 minute per individual tag
 **Perfect for:** Post-setup validation and ongoing operations
@@ -962,22 +946,6 @@ ansible-playbook -i inventory.yml operations.yml --tags telemetry -v
 ansible-playbook -i inventory.yml operations.yml --tags "health,security" -v
 ```
 
-### Backward Compatibility: Original Playbook
-
-```bash
-# Original playbook still available (runs all roles)
-ansible-playbook -i inventory.yml playbook.yml -v
-
-# Run only deployment roles
-ansible-playbook -i inventory.yml playbook.yml --tags deployment -v
-
-# Run only post-deployment roles
-ansible-playbook -i inventory.yml playbook.yml --tags post_deployment -v
-
-# Run only monitoring/operations
-ansible-playbook -i inventory.yml playbook.yml --tags operations -v
-```
-
 ### Limit to Specific Devices
 
 ```bash
@@ -988,7 +956,7 @@ ansible-playbook -i inventory.yml lab_setup.yml --limit routers -v
 ansible-playbook -i inventory.yml lab_setup.yml --limit switches -v
 
 # Validation on router1 only
-ansible-playbook -i inventory.yml operations.yml --tags post_deployment_validation --limit router1 -v
+ansible-playbook -i inventory.yml operations.yml --tags validation --limit router1 -v
 ```
 
 ---
@@ -1048,19 +1016,21 @@ cat ansible/inventory.yml | grep ansible_host
 
 **Playbook syntax errors:**
 ```bash
-ansible-playbook -i inventory.yml playbook.yml --syntax-check
+ansible-playbook -i inventory.yml lab_setup.yml --syntax-check
+ansible-playbook -i inventory.yml operations.yml --syntax-check
 ```
 
 **Specific task failures:**
 ```bash
 # Run with increased verbosity
-ansible-playbook -i inventory.yml playbook.yml -vvv
+ansible-playbook -i inventory.yml lab_setup.yml -vvv
+ansible-playbook -i inventory.yml operations.yml -vvv
 
 # Start at specific task
-ansible-playbook -i inventory.yml playbook.yml --start-at-task "Set hostname"
+ansible-playbook -i inventory.yml lab_setup.yml --start-at-task "Set hostname"
 
 # Run in check mode (dry-run)
-ansible-playbook -i inventory.yml playbook.yml --check
+ansible-playbook -i inventory.yml lab_setup.yml --check
 ```
 
 **SSH key issues:**
@@ -1115,10 +1085,10 @@ docker compose exec router1 ip addr
 ls -la reports/
 
 # Manual report generation
-ansible-playbook -i inventory.yml playbook.yml --tags health_monitoring -v
+ansible-playbook -i inventory.yml operations.yml --tags health -v
 
 # Check for errors in playbook
-ansible-playbook -i inventory.yml playbook.yml --tags health_monitoring -vvv
+ansible-playbook -i inventory.yml operations.yml --tags health -vvv
 ```
 
 **Metrics not collected:**

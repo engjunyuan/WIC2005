@@ -1,0 +1,18 @@
+---
+# Consolidated post-lab operations with task-level tags
+
+- name: Include validation tasks
+  import_tasks: validation.yml
+  tags: [validation]
+
+- name: Include telemetry tasks
+  import_tasks: telemetry.yml
+  tags: [telemetry]
+
+- name: Include health tasks
+  import_tasks: health.yml
+  tags: [health]
+
+- name: Include security tasks
+  import_tasks: security.yml
+  tags: [security]

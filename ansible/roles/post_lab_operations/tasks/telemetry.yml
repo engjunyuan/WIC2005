@@ -1,4 +1,6 @@
 ---
+# Telemetry Collection & Reporting Tasks
+
 - name: Set report timestamp
   set_fact:
     report_timestamp: "{{ lookup('pipe', 'date -u +%F') }}"

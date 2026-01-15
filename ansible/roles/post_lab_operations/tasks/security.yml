@@ -1,6 +1,5 @@
 ---
-# Security Verification Role
-# Validates security configurations including ACLs, NAT, and firewall rules
+# Security Verification Tasks
 
 - name: Set security audit timestamp
   set_fact:

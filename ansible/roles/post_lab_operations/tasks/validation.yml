@@ -1,6 +1,5 @@
 ---
-# Post-Deployment Validation Role
-# Performs comprehensive checks to verify network deployment success
+# Post-Deployment Validation Tasks
 
 - name: Wait for all devices to be stable
   wait_for:

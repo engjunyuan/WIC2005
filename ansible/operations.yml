@@ -19,53 +19,13 @@
 # ============================================================
 
 # ============================================================
-# POST-DEPLOYMENT VALIDATION
+# POST-LAB OPERATIONS (REPORTING)
 # ============================================================
 
-- name: Validate post-deployment configurations
+- name: Run post-lab operations and generate reports
   hosts: all
   gather_facts: false
   vars_files:
     - group_vars_all.yml
   roles:
-    - role: post_deployment_validation
-      tags: [validation]
-
-# ============================================================
-# TELEMETRY COLLECTION & REPORTING
-# ============================================================
-
-- name: Collect telemetry and generate reports
-  hosts: all
-  gather_facts: false
-  vars_files:
-    - group_vars_all.yml
-  roles:
-    - role: telemetry_report
-      tags: [telemetry]
-
-# ============================================================
-# HEALTH MONITORING
-# ============================================================
-
-- name: Monitor device health and stability
-  hosts: all
-  gather_facts: false
-  vars_files:
-    - group_vars_all.yml
-  roles:
-    - role: health_monitoring
-      tags: [health]
-
-# ============================================================
-# SECURITY VERIFICATION
-# ============================================================
-
-- name: Verify security configurations
-  hosts: all
-  gather_facts: false
-  vars_files:
-    - group_vars_all.yml
-  roles:
-    - role: security_verification
-      tags: [security]
+    - role: post_lab_operations
