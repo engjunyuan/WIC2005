@@ -55,6 +55,25 @@ cd /home/engjunyuan/Documents/WIC2005
 
 ### 2. Start the Network Topology
 
+### 2a. Build the Device Images (once per fresh checkout)
+
+```bash
+# Router image (FRRouting + SSH)
+docker build -t network-device-router:latest network-devices/router
+
+# Switch image (bridge-utils + VLAN + SSH)
+docker build -t network-device-switch:latest network-devices/switch
+```
+
+These images are referenced by `docker-compose.yml`. Rebuild them if you change any Dockerfiles or `entrypoint.sh`.
+
+**Why three Dockerfiles?**
+- `network-devices/router/Dockerfile`: Router-only image with FRRouting and routing daemons.
+- `network-devices/switch/Dockerfile`: Switch-only image with bridge-utils and VLAN tooling.
+- `network-devices/Dockerfile`: A combined, all-in-one base image useful for debugging or experimenting outside the router/switch split (not used by `docker-compose.yml`).
+
+### 2b. Start the Network Topology
+
 ```bash
 docker compose down  # Clean previous state (optional)
 docker compose up -d
@@ -857,7 +876,7 @@ brctl showmacs br0
 │       └── provision_devices/
 │           └── tasks/main.yml         # Device provisioning (optional)
 ├── network-devices/
-│   ├── Dockerfile                     # Base container image
+│   ├── Dockerfile                     # Base all-in-one image (router + switch tools)
 │   ├── entrypoint.sh                  # Container initialization
 │   ├── router/
 │   │   ├── Dockerfile                 # Router container (FRRouting)
