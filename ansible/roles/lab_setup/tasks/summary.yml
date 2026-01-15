@@ -1,0 +1,28 @@
+---
+# LAB SETUP COMPLETION SUMMARY
+
+- name: Display lab setup completion status
+  debug:
+    msg: |
+      ========================================
+      LAB SETUP COMPLETE
+      ========================================
+      Device: {{ inventory_hostname }}
+      
+      ✓ SSH connectivity verified
+      ✓ Hostname configured
+      {% if 'routers' in group_names %}
+      ✓ OSPF routing configured
+      ✓ FRR services restarted
+      {% endif %}
+      {% if 'switches' in group_names %}
+      ✓ VLAN configuration applied
+      ✓ Bridge members configured
+      {% endif %}
+      ✓ DNS resolvers configured
+      ✓ NAT gateway updated
+      ✓ Configuration backed up
+      
+      Backup Location: {{ backup_dir }}/{{ inventory_hostname }}_{{ backup_date }}.conf
+      ========================================
+  when: inventory_hostname is defined

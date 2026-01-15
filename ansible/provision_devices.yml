@@ -1,0 +1,15 @@
+---
+# ============================================================
+# PROVISION DEVICES PLAYBOOK
+# Uses local Provisioner API to create device entries
+# ============================================================
+# Usage:
+#   ansible-playbook -i inventories/inventory_provision.yml provision_devices.yml -v
+# ============================================================
+
+- name: Provision new devices via Provisioner API
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: provision_devices

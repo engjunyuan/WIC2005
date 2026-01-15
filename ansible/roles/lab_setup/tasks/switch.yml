@@ -1,25 +1,7 @@
 ---
-- name: Wait for SSH to be available
-  wait_for:
-    host: "{{ ansible_host }}"
-    port: "{{ ansible_port | default(22) }}"
-    timeout: 60
-  delegate_to: localhost
+# SWITCH CONFIGURATION (VLANs, BRIDGING)
 
-- name: Set hostname
-  raw: |
-    current="$(cat /etc/hostname 2>/dev/null || true)"
-    if [ "$current" = "{{ inventory_hostname }}" ]; then
-      echo "UNCHANGED"
-    else
-      hostname "{{ inventory_hostname }}"
-      echo "{{ inventory_hostname }}" > /etc/hostname
-      echo "CHANGED"
-    fi
-  register: hostname_update
-  changed_when: "'CHANGED' in hostname_update.stdout"
-
-- name: Ensure VLAN subinterfaces exist and are bridged (idempotent)
+- name: Create VLAN subinterfaces on switches
   raw: |
     # create vlan link if missing
     ip link show eth0.{{ item.id }} >/dev/null 2>&1 || ip link add link eth0 name eth0.{{ item.id }} type vlan id {{ item.id }}
@@ -29,8 +11,9 @@
   loop: "{{ vlans | default([]) }}"
   changed_when: false
   ignore_errors: yes
+  when: "'switches' in group_names"
 
-- name: Save VLAN configuration
+- name: Save VLAN configuration on switches
   raw: |
     tmp="/tmp/vlans.conf.new"
     cat > "$tmp" <<EOF
@@ -45,16 +28,19 @@
       echo "CHANGED"
     fi
     rm -f "$tmp"
-  when: vlans is defined
+  when: vlans is defined and "'switches' in group_names"
   register: vlan_config
   changed_when: "'CHANGED' in vlan_config.stdout"
 
-- name: Show bridge status
+- name: Display switch bridge configuration
   raw: brctl show
   register: bridge_status
   changed_when: false
+  when: "'switches' in group_names"
 
-- name: Display bridge config
+- name: Show switch bridge status
   debug:
-    var: bridge_status.stdout_lines
-  when: bridge_status is defined
+    msg: |
+      Switch {{ inventory_hostname }} Bridge Status:
+      {{ bridge_status.stdout }}
+  when: "'switches' in group_names and bridge_status is defined"

@@ -13,6 +13,7 @@ docker build -t network-device-switch:latest network-devices/switch
 
 - Initialization (lab setup): `ansible/lab_setup.yml`
 - Later automation (post-lab operations): `ansible/operations.yml`
+- Device provisioning (via API): `ansible/provision_devices.yml`
 
 ## Playbook: lab_setup.yml (initial lab setup)
 
@@ -29,7 +30,7 @@ Runs a single consolidated role across all devices.
 
 Run:
 ```bash
-ansible-playbook -i inventory.yml lab_setup.yml -v
+ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
 ```
 
 ## Playbook: operations.yml (post-lab automation)
@@ -58,18 +59,30 @@ Runs post-deployment tasks with tag selection. Without tags, all tasks run.
 
 Run all operations:
 ```bash
-ansible-playbook -i inventory.yml operations.yml -v
+ansible-playbook -i inventories/inventory.yml operations.yml -v
 ```
 
 Run a specific operation:
 ```bash
-ansible-playbook -i inventory.yml operations.yml --tags validation -v
-ansible-playbook -i inventory.yml operations.yml --tags health -v
-ansible-playbook -i inventory.yml operations.yml --tags security -v
-ansible-playbook -i inventory.yml operations.yml --tags telemetry -v
+ansible-playbook -i inventories/inventory.yml operations.yml --tags validation -v
+ansible-playbook -i inventories/inventory.yml operations.yml --tags health -v
+ansible-playbook -i inventories/inventory.yml operations.yml --tags security -v
+ansible-playbook -i inventories/inventory.yml operations.yml --tags telemetry -v
 ```
 
 Run multiple operations:
 ```bash
-ansible-playbook -i inventory.yml operations.yml --tags "health,security" -v
+ansible-playbook -i inventories/inventory.yml operations.yml --tags "health,security" -v
 ```
+
+## Playbook: provision_devices.yml (API provisioning)
+
+Uses the Provisioner API to create device entries from a separate inventory.
+
+Run:
+```bash
+ansible-playbook -i inventories/inventory_provision.yml provision_devices.yml -v
+```
+
+Inventory reference:
+- `ansible/inventories/inventory_provision.yml` defines the `new_branch` group and `provisioner.port`.

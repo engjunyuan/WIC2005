@@ -6,16 +6,16 @@
 # ============================================================
 # Usage:
 #   # Run all operations
-#   ansible-playbook -i inventory.yml operations.yml -v
+#   ansible-playbook -i inventories/inventory.yml operations.yml -v
 #
 #   # Run specific operations using tags
-#   ansible-playbook -i inventory.yml operations.yml --tags validation -v
-#   ansible-playbook -i inventory.yml operations.yml --tags health -v
-#   ansible-playbook -i inventory.yml operations.yml --tags security -v
-#   ansible-playbook -i inventory.yml operations.yml --tags telemetry -v
+#   ansible-playbook -i inventories/inventory.yml operations.yml --tags validation -v
+#   ansible-playbook -i inventories/inventory.yml operations.yml --tags health -v
+#   ansible-playbook -i inventories/inventory.yml operations.yml --tags security -v
+#   ansible-playbook -i inventories/inventory.yml operations.yml --tags telemetry -v
 #
 #   # Combine multiple tags
-#   ansible-playbook -i inventory.yml operations.yml --tags "health,security" -v
+#   ansible-playbook -i inventories/inventory.yml operations.yml --tags "health,security" -v
 # ============================================================
 
 # ============================================================
@@ -28,4 +28,4 @@
   vars_files:
     - group_vars_all.yml
   roles:
-    - role: post_lab_operations
+    - role: operations

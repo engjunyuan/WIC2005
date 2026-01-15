@@ -1,0 +1,15 @@
+---
+# SET HOSTNAMES (ALL DEVICES)
+
+- name: Set hostname on all devices
+  raw: |
+    current="$(cat /etc/hostname 2>/dev/null || true)"
+    if [ "$current" = "{{ inventory_hostname }}" ]; then
+      echo "UNCHANGED"
+    else
+      hostname "{{ inventory_hostname }}"
+      echo "{{ inventory_hostname }}" > /etc/hostname
+      echo "CHANGED"
+    fi
+  register: hostname_update
+  changed_when: "'CHANGED' in hostname_update.stdout"

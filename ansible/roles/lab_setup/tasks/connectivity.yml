@@ -1,0 +1,9 @@
+---
+# WAIT FOR CONNECTIVITY
+
+- name: Wait for SSH to be available on all devices
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ ansible_port | default(22) }}"
+    timeout: 60
+  delegate_to: localhost

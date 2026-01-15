@@ -1,13 +1,13 @@
 ╔═══════════════════════════════════════════════════════════════════════╗
-║     WIC2005 NETWORK AUTOMATION - TWO-PLAYBOOK STRUCTURE               ║
+║        WIC2005 NETWORK AUTOMATION - PLAYBOOK STRUCTURE               ║
 ╚═══════════════════════════════════════════════════════════════════════╝
 
-NEW PLAYBOOK STRUCTURE (2 PLAYBOOKS)
+NEW PLAYBOOK STRUCTURE
 ═══════════════════════════════════════════════════════════════════════
 
 1. LAB SETUP PLAYBOOK (RECOMMENDED - FASTEST)
    ├─ File: ansible/lab_setup.yml
-   ├─ Role: lab_setup (consolidated - 265 lines)
+   ├─ Role: lab_setup (split task files)
    ├─ Tasks:
    │  ├─ Configure hostnames (all devices)
    │  ├─ Setup OSPF routing (routers)
@@ -28,6 +28,11 @@ NEW PLAYBOOK STRUCTURE (2 PLAYBOOKS)
    ├─ Runtime: ~2-3 minutes (all) or ~1 min per tag
    └─ Perfect for: Post-deployment validation & ongoing operations
 
+3. PROVISION DEVICES PLAYBOOK (API-BASED)
+   ├─ File: ansible/provision_devices.yml
+   ├─ Inventory: ansible/inventories/inventory_provision.yml
+   └─ Perfect for: Creating new device entries before lab setup
+
 ═══════════════════════════════════════════════════════════════════════
 
 QUICK START - 3 SIMPLE STEPS
@@ -40,7 +45,7 @@ Step 1: Start Docker
 
 Step 2: Run Lab Setup (FASTEST - 1-2 MINUTES)
   $ cd ansible
-  $ ansible-playbook -i inventory.yml lab_setup.yml -v
+  $ ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
 
 Step 3: Done! Lab is ready to use
   ✓ All 5 devices configured
@@ -54,19 +59,22 @@ EXECUTION OPTIONS
 ═══════════════════════════════════════════════════════════════════════
 
 LAB SETUP (FASTEST - RECOMMENDED)
-  ansible-playbook -i inventory.yml lab_setup.yml -v
+  ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
 
 OPERATIONS - ALL TESTS
-  ansible-playbook -i inventory.yml operations.yml -v
+  ansible-playbook -i inventories/inventory.yml operations.yml -v
 
 OPERATIONS - SPECIFIC TAGS (FLEXIBLE)
-  ansible-playbook -i inventory.yml operations.yml --tags validation -v
-  ansible-playbook -i inventory.yml operations.yml --tags health -v
-  ansible-playbook -i inventory.yml operations.yml --tags security -v
-  ansible-playbook -i inventory.yml operations.yml --tags telemetry -v
+  ansible-playbook -i inventories/inventory.yml operations.yml --tags validation -v
+  ansible-playbook -i inventories/inventory.yml operations.yml --tags health -v
+  ansible-playbook -i inventories/inventory.yml operations.yml --tags security -v
+  ansible-playbook -i inventories/inventory.yml operations.yml --tags telemetry -v
 
 OPERATIONS - MULTIPLE TAGS
-  ansible-playbook -i inventory.yml operations.yml --tags "health,security" -v
+  ansible-playbook -i inventories/inventory.yml operations.yml --tags "health,security" -v
+
+PROVISION DEVICES (API)
+  ansible-playbook -i inventories/inventory_provision.yml provision_devices.yml -v
 
 ═══════════════════════════════════════════════════════════════════════
 
@@ -74,18 +82,18 @@ NEW ROLE DETAILS
 ═══════════════════════════════════════════════════════════════════════
 
 LAB_SETUP ROLE - Consolidates:
-  ✓ router_config tasks
-  ✓ switch_config tasks
-  ✓ batch_update tasks
-  ✓ backup_configs tasks
+  ✓ routing configuration (OSPF, ACLs, NAT)
+  ✓ switching configuration (VLANs, bridging)
+  ✓ shared updates (DNS/common settings)
+  ✓ configuration backups
 
-Location: ansible/roles/lab_setup/tasks/main.yml (265 lines)
+Location: ansible/roles/lab_setup/tasks/main.yml (task includes)
 
 Benefits:
   • Single role for all lab setup
   • Cleaner playbook structure
   • Faster (~1-2 minutes)
-  • Individual roles still available for custom needs
+  • Single role split into clean task files
 
 ═══════════════════════════════════════════════════════════════════════
 
@@ -95,6 +103,7 @@ FILES - PLAYBOOKS & ROLES
 Main Playbooks:
   ✓ ansible/lab_setup.yml (13 lines)
   ✓ ansible/operations.yml (48 lines with improved tags)
+  ✓ ansible/provision_devices.yml (12 lines)
 
 Lab Setup Role:
   ✓ ansible/roles/lab_setup/tasks/main.yml (265 lines)
@@ -113,10 +122,10 @@ docker compose ps
 
 # Test lab setup (dry-run)
 cd ansible
-ansible-playbook -i inventory.yml lab_setup.yml -v --check
+ansible-playbook -i inventories/inventory.yml lab_setup.yml -v --check
 
 # Run actual lab setup
-ansible-playbook -i inventory.yml lab_setup.yml -v
+ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
 
 # Check backups created
 ls -la ../backups/
@@ -154,12 +163,12 @@ NEXT STEPS
    docker compose up -d && sleep 20
 
 2. Run lab setup:
-   cd ansible && ansible-playbook -i inventory.yml lab_setup.yml -v
+   cd ansible && ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
 
 3. Verify it worked:
    docker compose exec router1 vtysh -c "show ip ospf neighbor"
 
 4. (Optional) Run operations/monitoring:
-   ansible-playbook -i inventory.yml operations.yml -v
+   ansible-playbook -i inventories/inventory.yml operations.yml -v
 
 ═══════════════════════════════════════════════════════════════════════

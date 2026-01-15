@@ -6,7 +6,7 @@
 # DNS/NAT configuration, and configuration backups
 # ============================================================
 # Usage:
-#   ansible-playbook -i inventory.yml lab_setup.yml -v
+#   ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
 # ============================================================
 
 - name: Setup lab environment on all devices

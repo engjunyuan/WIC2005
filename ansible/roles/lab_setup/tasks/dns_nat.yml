@@ -1,5 +1,7 @@
 ---
-- name: Update DNS resolver configuration
+# BATCH UPDATES (DNS, NAT GATEWAY, COMMON SETTINGS)
+
+- name: Configure DNS resolvers on all devices
   raw: |
     tmp="/tmp/resolv.conf.new"
     cat > "$tmp" <<'EOF'
@@ -18,7 +20,7 @@
   register: resolv_update
   changed_when: "'CHANGED' in resolv_update.stdout"
 
-- name: Update NAT server entry in hosts file
+- name: Update NAT gateway hosts entry on all devices
   raw: |
     tmp="/tmp/hosts.updated"
     grep -vE '(^|\\s)nat-gateway(\\s|$)' /etc/hosts > "$tmp"
@@ -32,3 +34,15 @@
     rm -f "$tmp"
   register: hosts_update
   changed_when: "'CHANGED' in hosts_update.stdout"
+
+- name: Verify DNS configuration
+  raw: cat /etc/resolv.conf
+  register: dns_verify
+  changed_when: false
+
+- name: Show DNS configuration
+  debug:
+    msg: |
+      Device {{ inventory_hostname }} DNS Configuration:
+      {{ dns_verify.stdout }}
+  ignore_errors: yes

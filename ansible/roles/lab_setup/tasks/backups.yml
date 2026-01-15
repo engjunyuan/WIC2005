@@ -1,7 +1,10 @@
 ---
+# CONFIGURATION BACKUP
+
 - name: Set backup date stamp
   set_fact:
     backup_date: "{{ lookup('pipe', 'date +%F') }}"
+  run_once: true
 
 - name: Create backup directory
   file:
@@ -10,27 +13,27 @@
   delegate_to: localhost
   run_once: true
 
-- name: Backup router configurations
+- name: Backup running router configurations
   raw: vtysh -c 'show running-config'
   register: router_backup
   changed_when: false
   when: "'routers' in group_names"
 
-- name: Save router backup
+- name: Save router configuration backup
   copy:
     content: "{{ router_backup.stdout }}"
     dest: "{{ backup_dir }}/{{ inventory_hostname }}_{{ backup_date }}.conf"
   delegate_to: localhost
   when: "'routers' in group_names and router_backup is defined"
 
-- name: Backup switch configurations
+- name: Backup switch VLAN configurations
   raw: cat /config/vlans.conf
   register: switch_backup
   changed_when: false
   when: "'switches' in group_names"
   ignore_errors: yes
 
-- name: Save switch backup
+- name: Save switch configuration backup
   copy:
     content: "{{ switch_backup.stdout }}"
     dest: "{{ backup_dir }}/{{ inventory_hostname }}_{{ backup_date }}.conf"
