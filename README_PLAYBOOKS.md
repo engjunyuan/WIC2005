@@ -40,19 +40,19 @@ Runs post-deployment tasks with tag selection. Without tags, all roles run.
 ### Roles and tags
 
 - `post_deployment_validation`
-  - Tags: `validation`, `post_lab`, `testing`, `default`
+  - Tags: `validation`
   - Does: validation checks and report generation
 
 - `telemetry_report`
-  - Tags: `telemetry`, `reporting`, `post_lab`, `default`
+  - Tags: `telemetry`
   - Does: telemetry collection and report generation
 
 - `health_monitoring`
-  - Tags: `health`, `monitoring`, `post_lab`, `default`
+  - Tags: `health`
   - Does: health checks and stability monitoring
 
 - `security_verification`
-  - Tags: `security`, `compliance`, `post_lab`, `default`
+  - Tags: `security`
   - Does: security verification and compliance checks
 
 Run all operations:

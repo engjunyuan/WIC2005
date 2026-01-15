@@ -29,7 +29,7 @@
     - group_vars_all.yml
   roles:
     - role: post_deployment_validation
-      tags: [validation, post_lab, testing, default]
+      tags: [validation]
 
 # ============================================================
 # TELEMETRY COLLECTION & REPORTING
@@ -42,7 +42,7 @@
     - group_vars_all.yml
   roles:
     - role: telemetry_report
-      tags: [telemetry, reporting, post_lab, default]
+      tags: [telemetry]
 
 # ============================================================
 # HEALTH MONITORING
@@ -55,7 +55,7 @@
     - group_vars_all.yml
   roles:
     - role: health_monitoring
-      tags: [health, monitoring, post_lab, default]
+      tags: [health]
 
 # ============================================================
 # SECURITY VERIFICATION
@@ -68,4 +68,4 @@
     - group_vars_all.yml
   roles:
     - role: security_verification
-      tags: [security, compliance, post_lab, default]
+      tags: [security]
