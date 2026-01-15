@@ -16,4 +16,4 @@
     - group_vars_all.yml
   roles:
     - role: lab_setup
-      tags: [lab_setup, setup, deployment]
+      tags: [lab_setup]

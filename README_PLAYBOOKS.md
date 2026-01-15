@@ -20,7 +20,7 @@ docker build -t network-device-switch:latest network-devices/switch
 Runs a single consolidated role across all devices.
 
 - Role: `lab_setup`
-- Tags: `lab_setup`, `setup`, `deployment`
+- Tags: `lab_setup`
 - What it does:
   - Hostname configuration
   - Router OSPF configuration
