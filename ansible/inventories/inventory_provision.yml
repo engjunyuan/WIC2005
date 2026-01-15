@@ -18,5 +18,3 @@ all:
             - { id: 10, name: "Management" }
             - { id: 20, name: "Data" }
   vars:
-    provisioner:
-      port: 8080

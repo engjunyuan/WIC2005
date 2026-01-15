@@ -1,7 +1,7 @@
 ---
 - name: Wait for Provisioner API
   uri:
-    url: http://localhost:{{ provisioner.port }}/devices
+    url: http://localhost:8080/devices
     method: GET
     status_code: 200
   register: prov_health
@@ -11,7 +11,7 @@
 
 - name: Provision devices from new_branch inventory group
   uri:
-    url: http://localhost:{{ provisioner.port }}/devices
+    url: http://localhost:8080/devices
     method: POST
     body_format: json
     body:
@@ -30,7 +30,7 @@
 
 - name: Provision devices from explicit vars (legacy)
   uri:
-    url: http://localhost:{{ provisioner.port }}/devices
+    url: http://localhost:8080/devices
     method: POST
     body_format: json
     body: "{{ item | to_json }}"

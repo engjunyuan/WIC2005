@@ -75,9 +75,9 @@ Run multiple operations:
 ansible-playbook -i inventories/inventory.yml operations.yml --tags "health,security" -v
 ```
 
-## Playbook: provision_devices.yml (API provisioning)
+## Playbook: provision_devices.yml (lab setup with alternate inventory)
 
-Uses the Provisioner API to create device entries from a separate inventory.
+Runs the lab setup playbook using a separate inventory.
 
 Run:
 ```bash
@@ -85,4 +85,4 @@ ansible-playbook -i inventories/inventory_provision.yml provision_devices.yml -v
 ```
 
 Inventory reference:
-- `ansible/inventories/inventory_provision.yml` defines the `new_branch` group and `provisioner.port`.
+- `ansible/inventories/inventory_provision.yml` defines the `new_branch` group.

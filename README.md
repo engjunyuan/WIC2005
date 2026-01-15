@@ -920,14 +920,14 @@ ansible-playbook -i inventories/inventory.yml operations.yml -v
 **Time:** 2-3 minutes for all tags, ~1 minute per individual tag
 **Perfect for:** Post-setup validation and ongoing operations
 
-#### 3. Provision Devices Playbook (API-Based)
+#### 3. Provision Devices Playbook (Alternate Inventory)
 ```bash
 # Provision new devices from a separate inventory
 ansible-playbook -i inventories/inventory_provision.yml provision_devices.yml -v
 ```
-**Runs:** `provision_devices` role (calls Provisioner API)
-**Inventory:** `ansible/inventories/inventory_provision.yml` with `new_branch` group and `provisioner.port`
-**Perfect for:** Creating new device entries before lab setup
+**Runs:** `lab_setup.yml` using a separate inventory
+**Inventory:** `ansible/inventories/inventory_provision.yml` with `new_branch` group
+**Perfect for:** Running lab setup against a different set of devices
 
 ### Run Only Specific Operations (Using Tags)
 
