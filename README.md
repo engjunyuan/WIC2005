@@ -1,5 +1,8 @@
 # Network Automation for TechMart Retail Chain Expansion
 
+## THIS IS A SAMPAH README, READ THE QUICKSTART.md instead
+
+
 ## 📋 Table of Contents
 
 1. [Project Overview](#project-overview)
