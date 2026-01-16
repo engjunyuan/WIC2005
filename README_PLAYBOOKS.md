@@ -29,13 +29,15 @@ Note: The `configs/` directory is mounted into the containers for shared daemon/
 Runs a single consolidated role across all devices.
 
 - Role: `lab_setup`
+- Vars: `ansible/vars/common.yml`
 - Tags: `lab_setup`
-- What it does:
-  - Hostname configuration
-  - Router OSPF configuration
-  - Switch VLAN configuration
-  - DNS and NAT settings
-  - Configuration backups
+- Tasks:
+  - Connectivity pre-checks
+  - Hostnames
+  - OSPF baseline on routers
+  - VLAN creation/bridge membership on switches
+  - DNS resolvers and NAT host entry
+  - Config backups and summary output
 
 Run:
 ```bash
@@ -69,25 +71,14 @@ ls -la backups/
 
 Runs post-deployment tasks with tag selection. Without tags, all tasks run.
 
-### Role and tags
-
-- `post_lab_operations` (single role; tasks use tags below)
-
-- `validation` (task)
-  - Tags: `validation`
-  - Does: validation checks and report generation
-
-- `telemetry` (task)
-  - Tags: `telemetry`
-  - Does: telemetry collection and report generation
-
-- `health` (task)
-  - Tags: `health`
-  - Does: health checks and stability monitoring
-
-- `security` (task)
-  - Tags: `security`
-  - Does: security verification and compliance checks
+- Role: `operations`
+- Vars: `ansible/vars/common.yml`
+- Tags: `validation`, `health`, `security`, `telemetry` (task-level)
+- Tasks:
+  - Validation: connectivity, OSPF status, VLAN checks, DNS checks, reports
+  - Health: load/disk/service status, basic process checks, reports
+  - Security: ACL/NAT inspection, port listening checks, SSH hardening checks, VLAN security checks, reports
+  - Telemetry: log tail/metrics collection and report
 
 Run all operations:
 ```bash
@@ -112,7 +103,11 @@ ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags "h
 Applies ACL policies to routers using dedicated vars.
 
 - Role: `acl_config`
-- Vars file: `ansible/vars/acl_policies.yml`
+- Vars: `ansible/vars/acl_policies.yml`
+- Tasks:
+  - Render ACL config from policies
+  - Apply ACLs via vtysh to routers
+  - Show ACL summary
 
 Run:
 ```bash
@@ -136,28 +131,34 @@ exit
 
 Runs device provisioning via API (optional) and then the lab setup playbook using a separate inventory.
 
+- Role: `provision_devices` + imports `playbooks/lab_setup.yml`
+- Vars: `ansible/vars/provision_devices.yml` (optional `devices` list)
+- Inventory: `ansible/inventories/inventory_provision.yml` (`new_branch` group)
+- Tasks:
+  - Wait for provisioning API
+  - POST devices from `new_branch` inventory (or `devices` var) to API
+  - Run full lab_setup against provisioned inventory
+
 Run:
 ```bash
 ansible-playbook -i inventories/inventory_provision.yml playbooks/provision_devices.yml -v
 ```
 
-Vars:
-- `ansible/vars/provision_devices.yml` (optional `devices` list for API-based onboarding)
-
-Inventory reference:
-- `ansible/inventories/inventory_provision.yml` defines the `new_branch` group.
-
 ## Playbook: playbooks/ipsec_tunnels.yml (strongSwan tunnels)
 
 Configures IPsec tunnels on routers using dedicated IPsec vars.
+
+- Role: `ipsec_tunnels`
+- Vars: `ansible/vars/ipsec.yml`
+- Tasks:
+  - Write `ipsec.conf` with hub/spoke or mesh peers
+  - Write `ipsec.secrets` with PSK
+  - Restart strongSwan and show status
 
 Run:
 ```bash
 ansible-playbook -i inventories/inventory.yml playbooks/ipsec_tunnels.yml -v
 ```
-
-Vars:
-- `ansible/vars/ipsec.yml`
 
 Manual verify:
 ```bash
