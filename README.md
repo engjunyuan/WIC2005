@@ -100,7 +100,7 @@ switch2       Up 20 seconds  0.0.0.0:2222->22/tcp
 ```bash
 cd ansible
 # Run lab setup (configures all devices)
-ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml -v
 ```
 
 This playbook configures:
@@ -109,9 +109,15 @@ This playbook configures:
 - ✓ Switch VLAN configuration
 - ✓ DNS and NAT gateway settings
 - ✓ Configuration backups
-- ✓ Router ACLs rendered from `ansible/group_vars_all.yml:acl_policies` via `roles/lab_setup/templates/frr.conf.j2`
 
 **Expected runtime:** ~1-2 minutes
+
+### 3b. Configure ACLs (dedicated playbook)
+
+```bash
+# Configure router ACLs using dedicated vars
+ansible-playbook -i inventories/inventory.yml playbooks/acls.yml -v
+```
 
 ### 4. (Optional) Run Operations Playbook for Post-Lab Automation
 
@@ -121,26 +127,26 @@ After setup is complete, run operations playbook for post-deployment validation,
 cd ansible
 
 # Option A: Run all post-lab operations
-ansible-playbook -i inventories/inventory.yml operations.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml -v
 
 # Option B: Run specific operations using tags
-ansible-playbook -i inventories/inventory.yml operations.yml --tags validation -v       # Validation only
-ansible-playbook -i inventories/inventory.yml operations.yml --tags health -v           # Health monitoring only
-ansible-playbook -i inventories/inventory.yml operations.yml --tags security -v         # Security verification only
-ansible-playbook -i inventories/inventory.yml operations.yml --tags telemetry -v        # Telemetry only
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags validation -v       # Validation only
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags health -v           # Health monitoring only
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags security -v         # Security verification only
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags telemetry -v        # Telemetry only
 
 # Option C: Combine multiple tags
-ansible-playbook -i inventories/inventory.yml operations.yml --tags "health,security" -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags "health,security" -v
 ```
 
 **Available tags:**
 
 | Tag | Playbook | What it does | Output files |
 | --- | --- | --- | --- |
-| `validation` | `operations.yml` | Post-deployment validation tests | `reports/validation/*_validation_report.md` |
-| `health` | `operations.yml` | Health monitoring and resource checks | `reports/health/*_health_report.md` |
-| `security` | `operations.yml` | Security verification and compliance checks | `reports/security/*_security_report.md` |
-| `telemetry` | `operations.yml` | Telemetry collection and reporting | `reports/*_*.md` |
+| `validation` | `playbooks/operations.yml` | Post-deployment validation tests | `reports/validation/*_validation_report.md` |
+| `health` | `playbooks/operations.yml` | Health monitoring and resource checks | `reports/health/*_health_report.md` |
+| `security` | `playbooks/operations.yml` | Security verification and compliance checks | `reports/security/*_security_report.md` |
+| `telemetry` | `playbooks/operations.yml` | Telemetry collection and reporting | `reports/*_*.md` |
 
 ### 5. Review Reports (after running operations playbook)
 
@@ -345,8 +351,8 @@ docker compose exec router1 ping -c 2 172.199.0.11
 
 **Commands:**
 ```bash
-ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
-ansible-playbook -i inventories/inventory.yml operations.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml -v
 ```
 
 **What Happens:**
@@ -371,10 +377,10 @@ ansible-playbook -i inventories/inventory.yml operations.yml -v
 ### Available Playbooks
 
 **Playbooks:**
-1. **lab_setup.yml** - Lab environment setup (hostnames, OSPF, VLANs, DNS, backups)
-2. **operations.yml** - Post-deployment operations with flexible tag selection (validation, health, security, telemetry)
-3. **provision_devices.yml** - Provision new devices via API (uses separate inventory)
-4. **ipsec_tunnels.yml** - IPsec tunnel setup (strongSwan)
+1. **playbooks/lab_setup.yml** - Lab environment setup (hostnames, OSPF, VLANs, DNS, backups)
+2. **playbooks/operations.yml** - Post-deployment operations with flexible tag selection (validation, health, security, telemetry)
+3. **playbooks/provision_devices.yml** - Provision new devices via API (uses separate inventory)
+4. **playbooks/ipsec_tunnels.yml** - IPsec tunnel setup (strongSwan)
 
 ### Phase 1: Infrastructure Provisioning
 
@@ -395,7 +401,7 @@ docker compose ps
 cd ansible
 
 # Step 2.2: Run lab setup
-ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml -v
 ```
 
 **What Happens:**
@@ -414,16 +420,16 @@ After lab setup is complete, you can run post-deployment operations with flexibl
 
 ```bash
 # Option A: Run all post-deployment operations at once
-ansible-playbook -i inventories/inventory.yml operations.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml -v
 
 # Option B: Run specific operations using tags
-ansible-playbook -i inventories/inventory.yml operations.yml --tags validation -v       # Validation only
-ansible-playbook -i inventories/inventory.yml operations.yml --tags health -v           # Health monitoring only
-ansible-playbook -i inventories/inventory.yml operations.yml --tags security -v         # Security verification only
-ansible-playbook -i inventories/inventory.yml operations.yml --tags telemetry -v        # Telemetry collection only
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags validation -v       # Validation only
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags health -v           # Health monitoring only
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags security -v         # Security verification only
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags telemetry -v        # Telemetry collection only
 
 # Option C: Combine multiple tags
-ansible-playbook -i inventories/inventory.yml operations.yml --tags "health,security" -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags "health,security" -v
 ```
 
 **What Happens (for each tag):**
@@ -496,7 +502,7 @@ ls -la ../reports/
 cp -r ../backups ~/backups_$(date +%Y%m%d)
 
 # Step 5.3: Document any manual changes (if needed)
-# Edit ansible/group_vars_all.yml with any custom settings
+# Edit ansible/vars/common.yml with any custom settings
 # Commit changes to version control
 ```
 
@@ -568,7 +574,7 @@ Key Checks:
 
 ```bash
 # Run only post-deployment validation (skip other stages)
-ansible-playbook -i inventories/inventory.yml operations.yml --tags validation -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags validation -v
 ```
 
 ### Testing Checklist
@@ -648,10 +654,10 @@ ansible-playbook -i inventories/inventory.yml operations.yml --tags validation -
 
 ```bash
 # Run health monitoring role
-ansible-playbook -i inventories/inventory.yml operations.yml --tags health -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags health -v
 
 # Or run all operations
-ansible-playbook -i inventories/inventory.yml operations.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml -v
 ```
 
 ### Health Monitoring Interpretation
@@ -768,10 +774,10 @@ ansible-playbook -i inventories/inventory.yml operations.yml -v
 
 ```bash
 # Run security verification role
-ansible-playbook -i inventories/inventory.yml operations.yml --tags security -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags security -v
 
 # Or run all operations
-ansible-playbook -i inventories/inventory.yml operations.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml -v
 ```
 
 ---
@@ -875,11 +881,17 @@ brctl showmacs br0
 │   ├── inventories/                   # Inventory files
 │   │   ├── inventory.yml              # 5 devices, groups, SSH config
 │   │   └── inventory_provision.yml    # Provisioning inventory (new_branch)
-│   ├── group_vars_all.yml             # Global vars (OSPF, VLAN, NAT, etc)
-│   │
-│   ├── lab_setup.yml                  # Lab setup playbook (RECOMMENDED)
-│   ├── operations.yml                 # Operations & monitoring with tag selection
-│   ├── provision_devices.yml          # Provision new devices via API
+│   ├── playbooks/                     # All Ansible playbooks
+│   │   ├── lab_setup.yml              # Lab setup playbook (RECOMMENDED)
+│   │   ├── operations.yml             # Operations & monitoring with tag selection
+│   │   ├── provision_devices.yml      # Provision new devices via API
+│   │   ├── ipsec_tunnels.yml          # IPsec tunnels (strongSwan)
+│   │   └── acls.yml                   # ACL configuration (routers)
+│   ├── vars/
+│   │   ├── common.yml                 # Global vars (OSPF, VLAN, NAT, etc)
+│   │   ├── ipsec.yml                  # IPsec tunnel defaults
+│   │   ├── acl_policies.yml           # ACL policy definitions
+│   │   └── provision_devices.yml      # Provisioning API payload (optional)
 │   │
 │   └── roles/                         # Modular automation tasks
 │       ├── lab_setup/                 # Consolidated setup role
@@ -941,7 +953,7 @@ brctl showmacs br0
 #### 1. Lab Setup Playbook (FASTEST - Recommended)
 ```bash
 # Initialize lab environment (setup, config, backups)
-ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml -v
 ```
 **Runs:** Consolidated lab_setup role
 **Tasks:** Hostnames, OSPF, VLANs, DNS, NAT, backups
@@ -951,7 +963,7 @@ ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
 #### 2. Operations Playbook (Flexible - With Tag Selection)
 ```bash
 # Run post-deployment operations (with flexible tag selection)
-ansible-playbook -i inventories/inventory.yml operations.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml -v
 ```
 **Runs:** `post_lab_operations` role (validation, health, security, telemetry tasks)
 **Tasks:** Post-deployment checks, monitoring, compliance, reporting
@@ -961,50 +973,52 @@ ansible-playbook -i inventories/inventory.yml operations.yml -v
 #### 3. Provision Devices Playbook (Alternate Inventory)
 ```bash
 # Provision new devices from a separate inventory
-ansible-playbook -i inventories/inventory_provision.yml provision_devices.yml -v
+ansible-playbook -i inventories/inventory_provision.yml playbooks/provision_devices.yml -v
 ```
-**Runs:** `lab_setup.yml` using a separate inventory
+**Runs:** `provision_devices` role (API onboarding) + `playbooks/lab_setup.yml` using a separate inventory
+**Vars:** `ansible/vars/provision_devices.yml` (optional devices list for API calls)
 **Inventory:** `ansible/inventories/inventory_provision.yml` with `new_branch` group
 **Perfect for:** Running lab setup against a different set of devices
 
 #### 4. IPsec Tunnels Playbook (strongSwan)
 ```bash
 # Configure IPsec tunnels on routers
-ansible-playbook -i inventories/inventory.yml ipsec_tunnels.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/ipsec_tunnels.yml -v
 ```
 **Runs:** `ipsec_tunnels` role
+**Vars:** `ansible/vars/ipsec.yml`
 **Perfect for:** Hub-and-spoke or mesh VPN tunnels between routers
 
 ### Run Only Specific Operations (Using Tags)
 
 ```bash
 # Post-deployment validation only
-ansible-playbook -i inventories/inventory.yml operations.yml --tags validation -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags validation -v
 
 # Health monitoring only
-ansible-playbook -i inventories/inventory.yml operations.yml --tags health -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags health -v
 
 # Security verification only
-ansible-playbook -i inventories/inventory.yml operations.yml --tags security -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags security -v
 
 # Telemetry collection and reporting only
-ansible-playbook -i inventories/inventory.yml operations.yml --tags telemetry -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags telemetry -v
 
 # Combine multiple tags
-ansible-playbook -i inventories/inventory.yml operations.yml --tags "health,security" -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags "health,security" -v
 ```
 
 ### Limit to Specific Devices
 
 ```bash
 # Lab setup on routers only
-ansible-playbook -i inventories/inventory.yml lab_setup.yml --limit routers -v
+ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml --limit routers -v
 
 # Lab setup on switches only
-ansible-playbook -i inventories/inventory.yml lab_setup.yml --limit switches -v
+ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml --limit switches -v
 
 # Validation on router1 only
-ansible-playbook -i inventories/inventory.yml operations.yml --tags validation --limit router1 -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags validation --limit router1 -v
 ```
 
 ---
@@ -1064,21 +1078,21 @@ cat ansible/inventories/inventory.yml | grep ansible_host
 
 **Playbook syntax errors:**
 ```bash
-ansible-playbook -i inventories/inventory.yml lab_setup.yml --syntax-check
-ansible-playbook -i inventories/inventory.yml operations.yml --syntax-check
+ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml --syntax-check
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --syntax-check
 ```
 
 **Specific task failures:**
 ```bash
 # Run with increased verbosity
-ansible-playbook -i inventories/inventory.yml lab_setup.yml -vvv
-ansible-playbook -i inventories/inventory.yml operations.yml -vvv
+ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml -vvv
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml -vvv
 
 # Start at specific task
-ansible-playbook -i inventories/inventory.yml lab_setup.yml --start-at-task "Set hostname"
+ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml --start-at-task "Set hostname"
 
 # Run in check mode (dry-run)
-ansible-playbook -i inventories/inventory.yml lab_setup.yml --check
+ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml --check
 ```
 
 **SSH key issues:**
@@ -1133,10 +1147,10 @@ docker compose exec router1 ip addr
 ls -la reports/
 
 # Manual report generation
-ansible-playbook -i inventories/inventory.yml operations.yml --tags health -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags health -v
 
 # Check for errors in playbook
-ansible-playbook -i inventories/inventory.yml operations.yml --tags health -vvv
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags health -vvv
 ```
 
 **Metrics not collected:**

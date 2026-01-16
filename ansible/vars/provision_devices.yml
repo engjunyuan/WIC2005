@@ -1,0 +1,6 @@
+---
+# Provisioning variables for API-based device onboarding
+
+# devices list is used by the legacy block in roles/provision_devices.
+# If you rely on inventory-based provisioning (new_branch group), keep this empty.
+devices: []

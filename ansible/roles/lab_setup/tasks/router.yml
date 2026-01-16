@@ -1,7 +1,7 @@
 ---
 # ROUTER CONFIGURATION (OSPF, ACLs, NAT)
 
-- name: Render FRR configuration for routers (OSPF + ACLs from acl_policies)
+- name: Render FRR configuration for routers (OSPF baseline)
   template:
     src: frr.conf.j2
     dest: /etc/frr/frr.conf

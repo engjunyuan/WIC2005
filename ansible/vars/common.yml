@@ -1,3 +1,4 @@
+---
 # Network topology and automation variables
 network:
   domain: lab.local
@@ -23,28 +24,6 @@ ospf:
     - eth0
     - eth2
 
-acl_policies:
-  - name: EDGE-IN
-    interface: eth1
-    direction: in
-    rules:
-      - seq: 10
-        action: permit
-        protocol: tcp
-        src: 172.199.0.0/24
-        dst: any
-        dst_port: 22
-      - seq: 20
-        action: permit
-        protocol: icmp
-        src: any
-        dst: any
-      - seq: 100
-        action: deny
-        protocol: ip
-        src: any
-        dst: any
-
 # BGP configuration (optional)
 bgp:
   asn: 65000
@@ -68,12 +47,3 @@ automation_tasks:
 
 # Local path for backups on the controller
 backup_dir: "{{ playbook_dir }}/../backups"
-
-# IPsec (strongSwan) defaults
-ipsec:
-  mode: hub_spoke   # hub_spoke or mesh
-  hub: router1
-  psk: wic2005
-  ike: aes256-sha256-modp2048
-  esp: aes256-sha256
-  auto: start

@@ -6,14 +6,14 @@
 # DNS/NAT configuration, and configuration backups
 # ============================================================
 # Usage:
-#   ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
+#   ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml -v
 # ============================================================
 
 - name: Setup lab environment on all devices
   hosts: all
   gather_facts: false
   vars_files:
-    - group_vars_all.yml
+    - vars/common.yml
   roles:
     - role: lab_setup
       tags: [lab_setup]

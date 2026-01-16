@@ -4,7 +4,15 @@
 # Runs lab setup using the provisioning inventory
 # ============================================================
 # Usage:
-#   ansible-playbook -i inventories/inventory_provision.yml provision_devices.yml -v
+#   ansible-playbook -i inventories/inventory_provision.yml playbooks/provision_devices.yml -v
 # ============================================================
+
+- name: Provision devices via API
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/provision_devices.yml
+  roles:
+    - provision_devices
 
 - import_playbook: lab_setup.yml

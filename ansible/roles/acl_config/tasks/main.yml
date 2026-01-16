@@ -1,0 +1,21 @@
+---
+# Apply ACL configuration to routers using dedicated vars
+
+- name: Render ACL config snippet for routers
+  template:
+    src: acls.conf.j2
+    dest: /tmp/acls.conf
+    mode: "0644"
+  when: "'routers' in group_names or device_type == 'router'"
+
+- name: Apply ACL configuration with vtysh
+  raw: vtysh -f /tmp/acls.conf
+  register: acl_apply
+  changed_when: "'Configuration saved' in acl_apply.stdout or 'line' in acl_apply.stdout"
+  when: "'routers' in group_names or device_type == 'router'"
+
+- name: Show ACL configuration summary
+  raw: vtysh -c 'show access-lists'
+  register: acl_show
+  changed_when: false
+  when: "'routers' in group_names or device_type == 'router'"

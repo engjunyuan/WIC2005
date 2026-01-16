@@ -1,0 +1,10 @@
+---
+# IPsec (strongSwan) defaults
+
+ipsec:
+  mode: hub_spoke   # hub_spoke or mesh
+  hub: router1
+  psk: wic2005
+  ike: aes256-sha256-modp2048
+  esp: aes256-sha256
+  auto: start

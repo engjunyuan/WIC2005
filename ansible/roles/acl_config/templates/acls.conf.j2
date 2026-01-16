@@ -1,0 +1,13 @@
+configure terminal
+{% for policy in acl_policies %}
+ip access-list extended {{ policy.name }}
+{% for rule in policy.rules %}
+ {{ rule.seq | default(loop.index * 10) }} {{ rule.action | default('permit') }} {{ rule.protocol | default('ip') }} {{ rule.src | default('any') }} {{ rule.dst | default('any') }}{% if rule.dst_port is defined %} eq {{ rule.dst_port }}{% endif %}
+{% endfor %}
+!
+interface {{ policy.interface | default('eth1') }}
+ ip access-group {{ policy.name }} {{ policy.direction | default('in') }}
+!
+{% endfor %}
+end
+write memory

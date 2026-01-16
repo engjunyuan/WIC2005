@@ -1,0 +1,22 @@
+---
+acl_policies:
+  - name: EDGE-IN
+    interface: eth1
+    direction: in
+    rules:
+      - seq: 10
+        action: permit
+        protocol: tcp
+        src: 172.199.0.0/24
+        dst: any
+        dst_port: 22
+      - seq: 20
+        action: permit
+        protocol: icmp
+        src: any
+        dst: any
+      - seq: 100
+        action: deny
+        protocol: ip
+        src: any
+        dst: any

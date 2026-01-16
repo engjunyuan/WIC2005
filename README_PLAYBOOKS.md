@@ -15,16 +15,16 @@ docker build -t network-device-switch:latest network-devices/switch
 docker compose up -d
 ```
 
-Note: The `configs/` directory is mounted into the containers for shared daemon/vtysh settings and switch configs. Router OSPF config is applied by Ansible during `lab_setup.yml`.
+Note: The `configs/` directory is mounted into the containers for shared daemon/vtysh settings and switch configs. Router OSPF config is applied by Ansible during `playbooks/lab_setup.yml`.
 
 ## Which playbook to use
 
-- Initialization (lab setup): `ansible/lab_setup.yml`
-- Later automation (post-lab operations): `ansible/operations.yml`
-- Device provisioning (via API): `ansible/provision_devices.yml`
-- IPsec tunnels (strongSwan): `ansible/ipsec_tunnels.yml`
+- Initialization (lab setup): `ansible/playbooks/lab_setup.yml`
+- Later automation (post-lab operations): `ansible/playbooks/operations.yml`
+- Device provisioning (via API): `ansible/playbooks/provision_devices.yml`
+- IPsec tunnels (strongSwan): `ansible/playbooks/ipsec_tunnels.yml`
 
-## Playbook: lab_setup.yml (initial lab setup)
+## Playbook: playbooks/lab_setup.yml (initial lab setup)
 
 Runs a single consolidated role across all devices.
 
@@ -36,11 +36,10 @@ Runs a single consolidated role across all devices.
   - Switch VLAN configuration
   - DNS and NAT settings
   - Configuration backups
-  - Router ACLs rendered from `ansible/group_vars_all.yml:acl_policies` into `roles/lab_setup/templates/frr.conf.j2`
 
 Run:
 ```bash
-ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/lab_setup.yml -v
 ```
 
 Manual verify:
@@ -66,7 +65,7 @@ exit
 ls -la backups/
 ```
 
-## Playbook: operations.yml (post-lab automation)
+## Playbook: playbooks/operations.yml (post-lab automation)
 
 Runs post-deployment tasks with tag selection. Without tags, all tasks run.
 
@@ -92,42 +91,60 @@ Runs post-deployment tasks with tag selection. Without tags, all tasks run.
 
 Run all operations:
 ```bash
-ansible-playbook -i inventories/inventory.yml operations.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml -v
 ```
 
 Run a specific operation:
 ```bash
-ansible-playbook -i inventories/inventory.yml operations.yml --tags validation -v
-ansible-playbook -i inventories/inventory.yml operations.yml --tags health -v
-ansible-playbook -i inventories/inventory.yml operations.yml --tags security -v
-ansible-playbook -i inventories/inventory.yml operations.yml --tags telemetry -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags validation -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags health -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags security -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags telemetry -v
 ```
 
 Run multiple operations:
 ```bash
-ansible-playbook -i inventories/inventory.yml operations.yml --tags "health,security" -v
+ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags "health,security" -v
 ```
 
-## Playbook: provision_devices.yml (lab setup with alternate inventory)
+## Playbook: acls.yml (router ACLs)
 
-Runs the lab setup playbook using a separate inventory.
+Applies ACL policies to routers using dedicated vars.
+
+- Role: `acl_config`
+- Vars file: `ansible/vars/acl_policies.yml`
 
 Run:
 ```bash
-ansible-playbook -i inventories/inventory_provision.yml provision_devices.yml -v
+ansible-playbook -i inventories/inventory.yml acls.yml -v
 ```
+
+## Playbook: playbooks/provision_devices.yml (lab setup with alternate inventory)
+
+Runs device provisioning via API (optional) and then the lab setup playbook using a separate inventory.
+
+Run:
+```bash
+ansible-playbook -i inventories/inventory_provision.yml playbooks/provision_devices.yml -v
+```
+
+Vars:
+- `ansible/vars/provision_devices.yml` (optional `devices` list for API-based onboarding)
 
 Inventory reference:
 - `ansible/inventories/inventory_provision.yml` defines the `new_branch` group.
 
-## Playbook: ipsec_tunnels.yml (strongSwan tunnels)
+## Playbook: playbooks/ipsec_tunnels.yml (strongSwan tunnels)
 
-Configures IPsec tunnels on routers using the `ipsec` vars in `ansible/group_vars_all.yml`.
+Configures IPsec tunnels on routers using dedicated IPsec vars.
 
 Run:
 ```bash
-ansible-playbook -i inventories/inventory.yml ipsec_tunnels.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/ipsec_tunnels.yml -v
 ```
+
+Vars:
+- `ansible/vars/ipsec.yml`
 
 Manual verify:
 ```bash
