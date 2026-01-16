@@ -119,6 +119,12 @@ This playbook configures:
 ansible-playbook -i inventories/inventory.yml playbooks/acls.yml -v
 ```
 
+Verify from a router container:
+```bash
+docker compose exec router1 vtysh -c "show access-lists"
+docker compose exec router1 vtysh -c "show run | section access-list"
+```
+
 ### 4. (Optional) Run Operations Playbook for Post-Lab Automation
 
 After setup is complete, run operations playbook for post-deployment validation, monitoring, and security verification:

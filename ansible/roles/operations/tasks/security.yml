@@ -19,6 +19,26 @@
   when: "'routers' in group_names"
   ignore_errors: yes
 
+- name: Summarize ACL presence across devices
+  run_once: true
+  vars:
+    acl_hosts: >-
+      {{
+        groups.get('all', []) | map('extract', hostvars) |
+        selectattr('acl_list', 'defined') |
+        list
+      }}
+  debug:
+    msg: |
+      ACL summary:
+      {% if acl_hosts %}
+      {% for host in acl_hosts %}
+        - {{ host.inventory_hostname }}: {{ host.acl_list.stdout | default('No ACL output') | truncate(120) }}
+      {% endfor %}
+      {% else %}
+        No ACL data collected from devices.
+      {% endif %}
+
 - name: Verify inbound ACLs on WAN interfaces
   raw: "vtysh -c 'show ip access-lists' 2>/dev/null || echo 'No ACLs configured'"
   register: inbound_acls
