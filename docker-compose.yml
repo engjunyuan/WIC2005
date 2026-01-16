@@ -21,7 +21,6 @@ services:
     volumes:
       - ./configs/router-common/daemons:/etc/frr/daemons:rw
       - ./configs/router-common/vtysh.conf:/etc/frr/vtysh.conf:rw
-      - ./configs/router1/frr.conf:/etc/frr/frr.conf:rw
 
   # Router 2 - Core router
   router2:
@@ -45,7 +44,6 @@ services:
     volumes:
       - ./configs/router-common/daemons:/etc/frr/daemons:rw
       - ./configs/router-common/vtysh.conf:/etc/frr/vtysh.conf:rw
-      - ./configs/router2/frr.conf:/etc/frr/frr.conf:rw
 
   # Switch 1 - Access layer with VLANs
   switch1:
@@ -64,8 +62,6 @@ services:
         ipv4_address: 192.168.11.20
     ports:
       - "2221:22"
-    volumes:
-      - ./configs/switch1:/config:rw
 
   # Switch 2 - Distribution layer
   switch2:
@@ -84,8 +80,6 @@ services:
         ipv4_address: 192.168.11.21
     ports:
       - "2222:22"
-    volumes:
-      - ./configs/switch2:/config:rw
 
   # Router 3 - Core backbone router
   router3:
@@ -109,7 +103,6 @@ services:
     volumes:
       - ./configs/router-common/daemons:/etc/frr/daemons:rw
       - ./configs/router-common/vtysh.conf:/etc/frr/vtysh.conf:rw
-      - ./configs/router3/frr.conf:/etc/frr/frr.conf:rw
 
 networks:
   mgmt:

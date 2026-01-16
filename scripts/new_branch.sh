@@ -7,8 +7,8 @@ Usage:
   ./scripts/new_branch.sh [options]
 
 Options:
-  --router-name <name>        Default: branch-router1
-  --switch-name <name>        Default: branch-switch1
+  --router-name <name>        Default: provisioned-router
+  --switch-name <name>        Default: provisioned-switch
   --router-ssh-port <port>    Default: 2301
   --switch-ssh-port <port>    Default: 2321
   --router-mgmt-ip <ip>       Default: 172.199.0.30
@@ -27,8 +27,8 @@ Example:
 EOF
 }
 
-ROUTER_NAME="branch-router1"
-SWITCH_NAME="branch-switch1"
+ROUTER_NAME="provisioned-router"
+SWITCH_NAME="provisioned-switch"
 ROUTER_SSH_PORT="2301"
 SWITCH_SSH_PORT="2321"
 ROUTER_MGMT_IP="172.199.0.30"
@@ -83,35 +83,19 @@ if docker ps -a --format '{{.Names}}' | grep -qx "$SWITCH_NAME"; then
 fi
 
 CONFIGS_DIR="$ROOT_DIR/configs"
-PROVISIONING_DIR="$CONFIGS_DIR/provisioning"
+PROVISIONING_DIR="$CONFIGS_DIR/provisioned-switches"
 ROUTER_CFG_DIR="$CONFIGS_DIR/$ROUTER_NAME"
 SWITCH_CFG_DIR="$PROVISIONING_DIR/$SWITCH_NAME"
 
-mkdir -p "$ROUTER_CFG_DIR" "$SWITCH_CFG_DIR"
+mkdir -p "$ROUTER_CFG_DIR"
 
 if [[ ! -f "$ROUTER_CFG_DIR/frr.conf" ]]; then
   cat > "$ROUTER_CFG_DIR/frr.conf" <<EOF
-! FRR configuration for $ROUTER_NAME
+! FRR base config for $ROUTER_NAME
 hostname $ROUTER_NAME
 log file /var/log/frr/frr.log
-!
 service integrated-vtysh-config
-!
-router ospf
-  network 0.0.0.0/0 area 0.0.0.0
-!
 line vty
-!
-EOF
-fi
-
-if [[ ! -f "$SWITCH_CFG_DIR/vlans.conf" ]]; then
-  cat > "$SWITCH_CFG_DIR/vlans.conf" <<EOF
-# VLAN configuration for $SWITCH_NAME
-# Format: VLAN_ID:NAME:PORTS
-10:Management:eth0
-20:Data:eth1
-30:Voice:eth2
 EOF
 fi
 
@@ -126,7 +110,6 @@ docker run -d \
   --ip "$ROUTER_MGMT_IP" \
   -v "$CONFIGS_DIR/router-common/daemons:/etc/frr/daemons:rw" \
   -v "$CONFIGS_DIR/router-common/vtysh.conf:/etc/frr/vtysh.conf:rw" \
-  -v "$ROUTER_CFG_DIR/frr.conf:/etc/frr/frr.conf:rw" \
   network-device-router:latest >/dev/null
 
 docker network connect --ip "$ROUTER_WAN_IP" "$wan_net" "$ROUTER_NAME"
@@ -141,7 +124,6 @@ docker run -d \
   -p "${SWITCH_SSH_PORT}:22" \
   --network "$mgmt_net" \
   --ip "$SWITCH_MGMT_IP" \
-  -v "$SWITCH_CFG_DIR:/config:rw" \
   network-device-switch:latest >/dev/null
 
 docker network connect --ip "$SWITCH_LAN_IP" "$lan_net" "$SWITCH_NAME"

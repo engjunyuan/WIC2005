@@ -906,12 +906,11 @@ brctl showmacs br0
 │   ├── router-common/                 # Shared FRR daemon config
 │   │   ├── daemons
 │   │   └── vtysh.conf
-│   ├── router1/
-│   │   ├── frr.conf                   # Router1 FRR config
-│   │   ├── daemons
-│   │   └── vtysh.conf
+│   ├── router1/                       # Optional per-router overrides
 │   ├── router2/
 │   ├── router3/
+│   ├── provisioned-router/            # Created by new_branch.sh
+│   ├── provisioned-switches/          # Created by new_branch.sh
 │   ├── switch1/
 │   │   ├── vlans.conf                 # Switch VLAN config
 │   │   └── vlans/

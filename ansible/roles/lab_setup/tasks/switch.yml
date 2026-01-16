@@ -17,6 +17,7 @@
 
 - name: Save VLAN configuration on switches
   raw: |
+    [ -d /config ] || mkdir -p /config
     tmp="/tmp/vlans.conf.new"
     cat > "$tmp" <<EOF
     {% for vlan in vlans | default([]) %}

@@ -15,7 +15,7 @@ docker build -t network-device-switch:latest network-devices/switch
 docker compose up -d
 ```
 
-Note: The `configs/` directory is mounted into the containers to seed initial device configurations (routers use `configs/router*/frr.conf`, switches use `configs/switch*/`).
+Note: The `configs/` directory is mounted into the containers for shared daemon/vtysh settings and switch configs. Router OSPF config is applied by Ansible during `lab_setup.yml`.
 
 ## Which playbook to use
 

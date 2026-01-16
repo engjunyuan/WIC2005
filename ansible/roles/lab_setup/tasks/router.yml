@@ -61,7 +61,7 @@
 
 - name: Normalize router hostname in running config
   raw: |
-    vtysh -c 'configure terminal' -c 'hostname {{ inventory_hostname }}' -c 'write memory'
+    vtysh -c 'configure terminal' -c 'hostname {{ inventory_hostname }}'
   changed_when: false
   when: "'routers' in group_names or device_type == 'router'"
 

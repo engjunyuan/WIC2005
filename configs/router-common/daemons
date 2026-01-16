@@ -1,5 +1,5 @@
 zebra=yes
-bgpd=yes
+bgpd=no
 ospfd=yes
-ripd=yes
+ripd=no
 staticrouted=yes
