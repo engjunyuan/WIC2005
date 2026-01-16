@@ -17,6 +17,11 @@ telemetry:
 ospf:
   process_id: 1
   router_id_base: 10.255.255
+  hello_interval: 30
+  dead_interval: 120
+  passive_interfaces:
+    - eth0
+    - eth2
 
 # BGP configuration (optional)
 bgp:

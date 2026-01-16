@@ -10,8 +10,23 @@
     log file /var/log/frr/frr.log
     service integrated-vtysh-config
 
+    interface eth0
+     ip ospf hello-interval {{ ospf.hello_interval | default(30) }}
+     ip ospf dead-interval {{ ospf.dead_interval | default(120) }}
+    !
+    interface eth1
+     ip ospf hello-interval {{ ospf.hello_interval | default(30) }}
+     ip ospf dead-interval {{ ospf.dead_interval | default(120) }}
+    !
+    interface eth2
+     ip ospf hello-interval {{ ospf.hello_interval | default(30) }}
+     ip ospf dead-interval {{ ospf.dead_interval | default(120) }}
+    !
     router ospf
       network 0.0.0.0/0 area {{ ospf_area }}
+    {% for iface in ospf.passive_interfaces | default([]) %}
+      passive-interface {{ iface }}
+    {% endfor %}
     !
     line vty
     EOF

@@ -9,6 +9,12 @@ docker build -t network-device-router:latest network-devices/router
 docker build -t network-device-switch:latest network-devices/switch
 ```
 
+## Start containers (required before Ansible)
+
+```bash
+docker compose up -d
+```
+
 ## Which playbook to use
 
 - Initialization (lab setup): `ansible/lab_setup.yml`
@@ -32,6 +38,20 @@ Runs a single consolidated role across all devices.
 Run:
 ```bash
 ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
+```
+
+Manual verify:
+```bash
+# Router (FRR)
+ssh -p 2201 root@localhost
+vtysh -c "show running-config"
+exit
+
+# Switch (bridge/VLAN)
+ssh -p 2221 root@localhost
+cat /config/vlans.conf
+brctl show
+exit
 ```
 
 ## Playbook: operations.yml (post-lab automation)
@@ -102,22 +122,5 @@ Manual verify:
 ssh -p 2201 root@localhost
 ipsec statusall
 ipsec status
-exit
-```
-
-## Manual verification (inside containers)
-
-Use SSH to enter a device and confirm configs were applied.
-
-```bash
-# Router (FRR)
-ssh -p 2201 root@localhost
-vtysh -c "show running-config"
-exit
-
-# Switch (bridge/VLAN)
-ssh -p 2221 root@localhost
-cat /config/vlans.conf
-brctl show
 exit
 ```
