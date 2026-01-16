@@ -30,7 +30,7 @@
 - name: Generate IPsec status report
   template:
     src: ipsec_status_report.md.j2
-    dest: "{{ playbook_dir }}/../reports/ipsec/{{ ipsec_report_filename }}_ipsec_report.md"
+    dest: "{{ playbook_dir }}/../reports/ipsec/ipsec_report.md"
   delegate_to: localhost
   run_once: true
   ignore_errors: yes
@@ -41,7 +41,7 @@
       ========================================
       IPSEC STATUS SUMMARY
       ========================================
-      Report: reports/ipsec/{{ ipsec_report_filename }}_ipsec_report.md
+      Report: reports/ipsec/ipsec_report.md
       Routers checked:
       {% for host in groups.get('all', []) | sort %}
       {% set is_router = ('routers' in hostvars[host].group_names) or (hostvars[host].device_type | default('') == 'router') %}

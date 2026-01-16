@@ -1,14 +1,60 @@
 # IPsec Status Report
 
-Timestamp (MYT): {{ ipsec_report_time_local }}
+Generated (MYT): {{ ipsec_report_time_local }}
 
-| Router | Established Tunnels | Installed SAs |
+## Summary
+
+| Router | Established | Installed |
 | --- | --- | --- |
 {% for host in groups.get('all', []) | sort %}
 {% set is_router = ('routers' in hostvars[host].group_names) or (hostvars[host].device_type | default('') == 'router') %}
 {% if is_router %}
 {% set established = hostvars[host].ipsec_established_lines | default([]) %}
 {% set installed = hostvars[host].ipsec_installed_lines | default([]) %}
-| {{ host }} | {{ (established | length > 0) | ternary(established | join('<br>'), 'None') }} | {{ (installed | length > 0) | ternary(installed | join('<br>'), 'None') }} |
+| {{ host }} | {{ established | length }} | {{ installed | length }} |
+{% endif %}
+{% endfor %}
+
+## Details
+
+{% for host in groups.get('all', []) | sort %}
+{% set is_router = ('routers' in hostvars[host].group_names) or (hostvars[host].device_type | default('') == 'router') %}
+{% if is_router %}
+{% set established = hostvars[host].ipsec_established_lines | default([]) %}
+{% set installed = hostvars[host].ipsec_installed_lines | default([]) %}
+### {{ host }}
+
+**Established tunnels by peer**
+{% set ns = namespace(peers={}) %}
+{% for line in established %}
+{% set peer = line | regex_replace('^.*-to-([^\\[]+)\\[.*', '\\1') %}
+{% set _ = ns.peers.update({peer: (ns.peers.get(peer, []) + [line])}) %}
+{% endfor %}
+{% if ns.peers | length > 0 %}
+{% for peer, lines in ns.peers | dictsort %}
+- {{ peer }} ({{ lines | length }})
+{% endfor %}
+{% else %}
+None
+{% endif %}
+
+**Established tunnels**
+{% if established | length > 0 %}
+```
+{{ established | join('\n') }}
+```
+{% else %}
+None
+{% endif %}
+
+**Installed SAs**
+{% if installed | length > 0 %}
+```
+{{ installed | join('\n') }}
+```
+{% else %}
+None
+{% endif %}
+
 {% endif %}
 {% endfor %}

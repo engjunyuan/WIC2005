@@ -194,7 +194,7 @@
 - name: Generate security verification report
   template:
     src: security_report.md.j2
-    dest: "{{ playbook_dir }}/../reports/security/{{ report_time_filename }}_security_report.md"
+    dest: "{{ playbook_dir }}/../reports/security/security_report.md"
   delegate_to: localhost
   run_once: true
   ignore_errors: yes

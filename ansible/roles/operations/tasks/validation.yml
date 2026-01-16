@@ -170,7 +170,7 @@
 - name: Generate validation summary
   template:
     src: validation_report.md.j2
-    dest: "{{ playbook_dir }}/../reports/validation/{{ report_time_filename }}_validation_report.md"
+    dest: "{{ playbook_dir }}/../reports/validation/validation_report.md"
   delegate_to: localhost
   run_once: true
   ignore_errors: yes

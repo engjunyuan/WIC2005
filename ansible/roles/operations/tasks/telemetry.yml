@@ -9,7 +9,7 @@
 
 - name: Create report directory
   file:
-    path: "{{ playbook_dir }}/../reports"
+    path: "{{ playbook_dir }}/../reports/telemetry"
     state: directory
   delegate_to: localhost
   run_once: true
@@ -96,5 +96,5 @@
 - name: Write formatted report
   template:
     src: report.md.j2
-    dest: "{{ playbook_dir }}/../reports/{{ inventory_hostname }}_{{ report_timestamp_filename }}.md"
+    dest: "{{ playbook_dir }}/../reports/telemetry/{{ inventory_hostname }}_telemetry_report.md"
   delegate_to: localhost

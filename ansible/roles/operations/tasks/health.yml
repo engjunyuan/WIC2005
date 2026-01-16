@@ -172,7 +172,7 @@
 - name: Generate health monitoring report
   template:
     src: health_report.md.j2
-    dest: "{{ playbook_dir }}/../reports/health/{{ report_time_filename }}_health_report.md"
+    dest: "{{ playbook_dir }}/../reports/health/health_report.md"
   delegate_to: localhost
   run_once: true
   ignore_errors: yes
