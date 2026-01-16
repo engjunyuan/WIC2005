@@ -46,9 +46,12 @@ Manual verify:
 ```bash
 # Router (FRR)
 ssh -p 2201 root@localhost
+hostname
 vtysh -c "show running-config"
 vtysh -c "show ip ospf neighbor"
 vtysh -c "show ip route"
+cat /etc/resolv.conf
+vtysh -c "show ip nat translations"
 exit
 
 # Switch (bridge/VLAN)
@@ -57,6 +60,9 @@ cat /config/vlans.conf
 brctl show
 ip link show
 exit
+
+# Backup files on controller
+ls -la backups/
 ```
 
 ## Playbook: operations.yml (post-lab automation)
