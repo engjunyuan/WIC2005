@@ -107,8 +107,7 @@ Run multiple operations:
 ansible-playbook -i inventories/inventory.yml playbooks/operations.yml --tags "health,security" -v
 ```
 
-
-## Playbook: acls.yml (router ACLs)
+## Playbook: playbooks/acls.yml (router ACLs)
 
 Applies ACL policies to routers using dedicated vars.
 
@@ -117,19 +116,20 @@ Applies ACL policies to routers using dedicated vars.
 
 Run:
 ```bash
-ansible-playbook -i inventories/inventory.yml acls.yml -v
+ansible-playbook -i inventories/inventory.yml playbooks/acls.yml -v
 ```
 
 Manual verification:
 ```bash
-# ACL summary on router
- vtysh -c "show access-lists"
+ssh -p 2201 root@localhost
+vtysh -c "show access-lists"
 
 # Validation report
 cat ../reports/validation/*_validation_report.md
 
 # Security report
 cat ../reports/security/*_security_report.md
+exit
 ```
 
 ## Playbook: playbooks/provision_devices.yml (lab setup with alternate inventory)
