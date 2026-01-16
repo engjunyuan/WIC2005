@@ -15,6 +15,8 @@ docker build -t network-device-switch:latest network-devices/switch
 docker compose up -d
 ```
 
+Note: The `configs/` directory is mounted into the containers to seed initial device configurations (routers use `configs/router*/frr.conf`, switches use `configs/switch*/`).
+
 ## Which playbook to use
 
 - Initialization (lab setup): `ansible/lab_setup.yml`
