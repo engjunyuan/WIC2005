@@ -109,6 +109,8 @@ This playbook configures:
 - ✓ Switch VLAN configuration
 - ✓ DNS and NAT gateway settings
 - ✓ Configuration backups
+- ✓ Optional Batfish snapshot export of rendered FRR configs (enable with `-e batfish_enabled=true`)
+- ✓ Router ACLs rendered from `ansible/group_vars_all.yml:acl_policies` via `roles/lab_setup/templates/frr.conf.j2`
 
 **Expected runtime:** ~1-2 minutes
 
@@ -131,6 +133,10 @@ ansible-playbook -i inventories/inventory.yml operations.yml --tags telemetry -v
 # Option C: Combine multiple tags
 ansible-playbook -i inventories/inventory.yml operations.yml --tags "health,security" -v
 ```
+
+### Batfish integration (optional)
+
+If you pass `-e batfish_enabled=true` to `lab_setup.yml`, the router role will copy each rendered `/etc/frr/frr.conf` to `ansible/batfish/snapshots/<router>/configs/frr.conf` on the controller. Plug your `bf_init_snapshot` / `bf_answer` steps into the placeholder shell block inside `roles/lab_setup/tasks/router.yml` to validate OSPF and ACL intent before/after deployment.
 
 **Available tags:**
 

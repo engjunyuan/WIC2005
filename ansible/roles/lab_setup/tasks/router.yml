@@ -1,55 +1,44 @@
 ---
 # ROUTER CONFIGURATION (OSPF, ACLs, NAT)
 
-- name: Push FRR OSPF configuration to routers
-  raw: |
-    tmp="/tmp/frr.conf.new"
-    cat > "$tmp" <<'EOF'
-    ! FRR OSPF baseline
-    hostname {{ inventory_hostname }}
-    log file /var/log/frr/frr.log
-    service integrated-vtysh-config
-
-    interface eth0
-     ip ospf hello-interval {{ ospf.hello_interval | default(30) }}
-     ip ospf dead-interval {{ ospf.dead_interval | default(120) }}
-    !
-    interface eth1
-     ip ospf hello-interval {{ ospf.hello_interval | default(30) }}
-     ip ospf dead-interval {{ ospf.dead_interval | default(120) }}
-    !
-    interface eth2
-     ip ospf hello-interval {{ ospf.hello_interval | default(30) }}
-     ip ospf dead-interval {{ ospf.dead_interval | default(120) }}
-    !
-    router ospf
-      network 0.0.0.0/0 area {{ ospf_area }}
-    {% for iface in ospf.passive_interfaces | default([]) %}
-      passive-interface {{ iface }}
-    {% endfor %}
-    !
-    line vty
-    EOF
-    need_change=0
-    if [ ! -f /etc/frr/frr.conf ] || ! cmp -s "$tmp" /etc/frr/frr.conf; then
-      need_change=1
-    fi
-    current_meta="$(stat -c '%U:%G %a' /etc/frr/frr.conf 2>/dev/null || echo missing)"
-    if [ "$current_meta" != "frr:frr 640" ]; then
-      need_change=1
-    fi
-    if [ "$need_change" -eq 1 ]; then
-      cat "$tmp" > /etc/frr/frr.conf
-      chown frr:frr /etc/frr/frr.conf
-      chmod 640 /etc/frr/frr.conf
-      echo "CHANGED"
-    else
-      echo "UNCHANGED"
-    fi
-    rm -f "$tmp"
+- name: Render FRR configuration for routers (OSPF + ACLs from acl_policies)
+  template:
+    src: frr.conf.j2
+    dest: /etc/frr/frr.conf
+    owner: frr
+    group: frr
+    mode: "0640"
   register: frr_config
-  changed_when: "'CHANGED' in frr_config.stdout"
   when: "'routers' in group_names or device_type == 'router'"
+
+- name: Prepare Batfish snapshot with rendered config (optional)
+  when: ("'routers' in group_names or device_type == 'router'") and (batfish_enabled | default(false))
+  block:
+    - name: Read rendered FRR config from router
+      slurp:
+        path: /etc/frr/frr.conf
+      register: frr_conf_slurp
+
+    - name: Ensure Batfish snapshot directory exists
+      file:
+        path: "{{ playbook_dir }}/batfish/snapshots/{{ inventory_hostname }}/configs"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+
+    - name: Save FRR config to Batfish snapshot
+      copy:
+        dest: "{{ playbook_dir }}/batfish/snapshots/{{ inventory_hostname }}/configs/frr.conf"
+        content: "{{ frr_conf_slurp.content | b64decode }}"
+        mode: "0644"
+      delegate_to: localhost
+
+    - name: Run Batfish placeholder validation
+      delegate_to: localhost
+      shell: |
+        echo "Batfish validation placeholder for {{ inventory_hostname }}"
+        echo "Plug in bf_init_snapshot / bf_answer checks here."
+      changed_when: false
 
 - name: Restart FRR daemons on routers
   raw: |

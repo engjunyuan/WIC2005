@@ -36,11 +36,19 @@ Runs a single consolidated role across all devices.
   - Switch VLAN configuration
   - DNS and NAT settings
   - Configuration backups
+  - (Optional) Batfish snapshot export of rendered FRR configs when `-e batfish_enabled=true`
+  - Router ACLs rendered from `ansible/group_vars_all.yml:acl_policies` into `roles/lab_setup/templates/frr.conf.j2`
 
 Run:
 ```bash
 ansible-playbook -i inventories/inventory.yml lab_setup.yml -v
 ```
+
+Optional Batfish export:
+```bash
+ansible-playbook -i inventories/inventory.yml lab_setup.yml -v -e batfish_enabled=true
+```
+This writes rendered router configs to `ansible/batfish/snapshots/<router>/configs/frr.conf`. Add your `bf_init_snapshot` / `bf_answer` logic inside `roles/lab_setup/tasks/router.yml`.
 
 Manual verify:
 ```bash

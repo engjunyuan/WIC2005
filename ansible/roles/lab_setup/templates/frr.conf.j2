@@ -1,0 +1,52 @@
+! FRR OSPF baseline with ACL guardrails
+hostname {{ inventory_hostname }}
+log file /var/log/frr/frr.log
+service integrated-vtysh-config
+
+interface eth0
+ ip ospf hello-interval {{ ospf.hello_interval | default(30) }}
+ ip ospf dead-interval {{ ospf.dead_interval | default(120) }}
+!
+interface eth1
+ ip ospf hello-interval {{ ospf.hello_interval | default(30) }}
+ ip ospf dead-interval {{ ospf.dead_interval | default(120) }}
+!
+interface eth2
+ ip ospf hello-interval {{ ospf.hello_interval | default(30) }}
+ ip ospf dead-interval {{ ospf.dead_interval | default(120) }}
+!
+router ospf
+  network 0.0.0.0/0 area {{ ospf_area }}
+{% for iface in ospf.passive_interfaces | default([]) %}
+  passive-interface {{ iface }}
+{% endfor %}
+!
+{% set default_acls = [
+  {
+    "name": "EDGE-IN",
+    "interface": "eth1",
+    "direction": "in",
+    "rules": [
+      {"seq": 10, "action": "permit", "protocol": "tcp", "src": "172.199.0.0/24", "dst": "any", "dst_port": 22},
+      {"seq": 20, "action": "permit", "protocol": "icmp", "src": "any", "dst": "any"},
+      {"seq": 100, "action": "deny", "protocol": "ip", "src": "any", "dst": "any"}
+    ]
+  }
+] %}
+{% set policies = acl_policies | default(default_acls) %}
+{% if policies %}
+! Access control lists
+{% for policy in policies %}
+ip access-list extended {{ policy.name }}
+{% for rule in policy.rules %}
+ {{ rule.seq | default(loop.index * 10) }} {{ rule.action | default('permit') }} {{ rule.protocol | default('ip') }} {{ rule.src | default('any') }} {{ rule.dst | default('any') }}{% if rule.dst_port is defined %} eq {{ rule.dst_port }}{% endif %}
+{% endfor %}
+!
+{% endfor %}
+{% for policy in policies %}
+interface {{ policy.interface | default('eth1') }}
+ ip access-group {{ policy.name }} {{ policy.direction | default('in') }}
+!
+{% endfor %}
+{% endif %}
+line vty
