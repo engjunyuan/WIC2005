@@ -11,11 +11,11 @@
       
       ✓ SSH connectivity verified
       ✓ Hostname configured
-      {% if 'routers' in group_names %}
+      {% if 'routers' in group_names or device_type == 'router' %}
       ✓ OSPF routing configured
       ✓ FRR services restarted
       {% endif %}
-      {% if 'switches' in group_names %}
+      {% if 'switches' in group_names or device_type == 'switch' %}
       ✓ VLAN configuration applied
       ✓ Bridge members configured
       {% endif %}

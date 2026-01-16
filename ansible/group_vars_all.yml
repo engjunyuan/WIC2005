@@ -41,3 +41,12 @@ automation_tasks:
 
 # Local path for backups on the controller
 backup_dir: "{{ playbook_dir }}/../backups"
+
+# IPsec (strongSwan) defaults
+ipsec:
+  mode: hub_spoke   # hub_spoke or mesh
+  hub: router1
+  psk: wic2005
+  ike: aes256-sha256-modp2048
+  esp: aes256-sha256
+  auto: start

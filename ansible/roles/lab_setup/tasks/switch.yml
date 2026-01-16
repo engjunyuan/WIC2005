@@ -3,6 +3,8 @@
 
 - name: Create VLAN subinterfaces on switches
   raw: |
+    # ensure config dir exists for provisioning containers
+    [ -d /config ] || mkdir -p /config
     # create vlan link if missing
     ip link show eth0.{{ item.id }} >/dev/null 2>&1 || ip link add link eth0 name eth0.{{ item.id }} type vlan id {{ item.id }}
     ip link set eth0.{{ item.id }} up
@@ -11,7 +13,7 @@
   loop: "{{ vlans | default([]) }}"
   changed_when: false
   ignore_errors: yes
-  when: "'switches' in group_names"
+  when: "'switches' in group_names or device_type == 'switch'"
 
 - name: Save VLAN configuration on switches
   raw: |
@@ -28,7 +30,7 @@
       echo "CHANGED"
     fi
     rm -f "$tmp"
-  when: vlans is defined and "'switches' in group_names"
+  when: vlans is defined and ("'switches' in group_names or device_type == 'switch'")
   register: vlan_config
   changed_when: "'CHANGED' in vlan_config.stdout"
 
@@ -36,11 +38,11 @@
   raw: brctl show
   register: bridge_status
   changed_when: false
-  when: "'switches' in group_names"
+  when: "'switches' in group_names or device_type == 'switch'"
 
 - name: Show switch bridge status
   debug:
     msg: |
       Switch {{ inventory_hostname }} Bridge Status:
       {{ bridge_status.stdout }}
-  when: "'switches' in group_names and bridge_status is defined"
+  when: "('switches' in group_names or device_type == 'switch') and bridge_status is defined"

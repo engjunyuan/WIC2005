@@ -17,20 +17,20 @@
   raw: vtysh -c 'show running-config'
   register: router_backup
   changed_when: false
-  when: "'routers' in group_names"
+  when: "'routers' in group_names or device_type == 'router'"
 
 - name: Save router configuration backup
   copy:
     content: "{{ router_backup.stdout }}"
     dest: "{{ backup_dir }}/{{ inventory_hostname }}_{{ backup_date }}.conf"
   delegate_to: localhost
-  when: "'routers' in group_names and router_backup is defined"
+  when: "('routers' in group_names or device_type == 'router') and router_backup is defined"
 
 - name: Backup switch VLAN configurations
   raw: cat /config/vlans.conf
   register: switch_backup
   changed_when: false
-  when: "'switches' in group_names"
+  when: "'switches' in group_names or device_type == 'switch'"
   ignore_errors: yes
 
 - name: Save switch configuration backup
@@ -38,4 +38,4 @@
     content: "{{ switch_backup.stdout }}"
     dest: "{{ backup_dir }}/{{ inventory_hostname }}_{{ backup_date }}.conf"
   delegate_to: localhost
-  when: "'switches' in group_names and switch_backup is defined"
+  when: "('switches' in group_names or device_type == 'switch') and switch_backup is defined"

@@ -373,6 +373,7 @@ ansible-playbook -i inventories/inventory.yml operations.yml -v
 1. **lab_setup.yml** - Lab environment setup (hostnames, OSPF, VLANs, DNS, backups)
 2. **operations.yml** - Post-deployment operations with flexible tag selection (validation, health, security, telemetry)
 3. **provision_devices.yml** - Provision new devices via API (uses separate inventory)
+4. **ipsec_tunnels.yml** - IPsec tunnel setup (strongSwan)
 
 ### Phase 1: Infrastructure Provisioning
 
@@ -459,6 +460,12 @@ exit
 ssh -p 2221 root@localhost
 cat /config/vlans.conf
 brctl show
+exit
+
+# IPsec (strongSwan) status
+ssh -p 2201 root@localhost
+ipsec statusall
+ipsec status
 exit
 
 # Step 5.1: Test OSPF routing
@@ -959,6 +966,14 @@ ansible-playbook -i inventories/inventory_provision.yml provision_devices.yml -v
 **Runs:** `lab_setup.yml` using a separate inventory
 **Inventory:** `ansible/inventories/inventory_provision.yml` with `new_branch` group
 **Perfect for:** Running lab setup against a different set of devices
+
+#### 4. IPsec Tunnels Playbook (strongSwan)
+```bash
+# Configure IPsec tunnels on routers
+ansible-playbook -i inventories/inventory.yml ipsec_tunnels.yml -v
+```
+**Runs:** `ipsec_tunnels` role
+**Perfect for:** Hub-and-spoke or mesh VPN tunnels between routers
 
 ### Run Only Specific Operations (Using Tags)
 

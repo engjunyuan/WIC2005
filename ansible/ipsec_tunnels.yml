@@ -1,0 +1,17 @@
+---
+# ============================================================
+# IPSEC TUNNEL PLAYBOOK
+# Configures strongSwan tunnels on router devices
+# ============================================================
+# Usage:
+#   ansible-playbook -i inventories/inventory.yml ipsec_tunnels.yml -v
+# ============================================================
+
+- name: Configure IPsec tunnels on routers
+  hosts: all
+  gather_facts: false
+  vars_files:
+    - group_vars_all.yml
+  roles:
+    - role: ipsec_tunnels
+      tags: [ipsec]

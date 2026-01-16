@@ -14,6 +14,7 @@ docker build -t network-device-switch:latest network-devices/switch
 - Initialization (lab setup): `ansible/lab_setup.yml`
 - Later automation (post-lab operations): `ansible/operations.yml`
 - Device provisioning (via API): `ansible/provision_devices.yml`
+- IPsec tunnels (strongSwan): `ansible/ipsec_tunnels.yml`
 
 ## Playbook: lab_setup.yml (initial lab setup)
 
@@ -86,6 +87,23 @@ ansible-playbook -i inventories/inventory_provision.yml provision_devices.yml -v
 
 Inventory reference:
 - `ansible/inventories/inventory_provision.yml` defines the `new_branch` group.
+
+## Playbook: ipsec_tunnels.yml (strongSwan tunnels)
+
+Configures IPsec tunnels on routers using the `ipsec` vars in `ansible/group_vars_all.yml`.
+
+Run:
+```bash
+ansible-playbook -i inventories/inventory.yml ipsec_tunnels.yml -v
+```
+
+Manual verify:
+```bash
+ssh -p 2201 root@localhost
+ipsec statusall
+ipsec status
+exit
+```
 
 ## Manual verification (inside containers)
 

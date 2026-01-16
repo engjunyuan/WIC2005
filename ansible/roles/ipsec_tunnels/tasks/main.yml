@@ -1,0 +1,55 @@
+---
+# IPSEC TUNNEL CONFIGURATION (strongSwan)
+
+- name: Write IPsec config on routers
+  raw: |
+    cat > /etc/ipsec.conf <<'EOF'
+    config setup
+      uniqueids=no
+
+    conn %default
+      keyexchange=ikev2
+      authby=psk
+      ike={{ ipsec.ike | default('aes256-sha256-modp2048') }}
+      esp={{ ipsec.esp | default('aes256-sha256') }}
+      ikelifetime=1h
+      lifetime=8h
+      dpdaction=restart
+      dpddelay=10s
+      dpdtimeout=30s
+      rekey=no
+      left={{ wan_ip | default(mgmt_ip) }}
+      leftsubnet={{ (lan_ip | default(mgmt_ip)) ~ '/32' }}
+      auto={{ ipsec.auto | default('start') }}
+
+    {% set mode = ipsec.mode | default('hub_spoke') %}
+    {% set hub = ipsec.hub | default('router1') %}
+    {% for peer in groups['all'] | sort %}
+    {% set peer_type = hostvars[peer].device_type | default('') %}
+    {% if peer_type == 'router' and peer != inventory_hostname %}
+    {% if mode == 'mesh' or (mode == 'hub_spoke' and (inventory_hostname == hub or peer == hub)) %}
+    conn {{ inventory_hostname }}-to-{{ peer }}
+      right={{ hostvars[peer].wan_ip | default(hostvars[peer].mgmt_ip) }}
+      rightsubnet={{ (hostvars[peer].lan_ip | default(hostvars[peer].mgmt_ip)) ~ '/32' }}
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+    EOF
+  changed_when: true
+  when: "'routers' in group_names or device_type == 'router'"
+
+- name: Write IPsec secrets on routers
+  raw: |
+    cat > /etc/ipsec.secrets <<'EOF'
+    : PSK "{{ ipsec.psk | default('wic2005') }}"
+    EOF
+    chmod 600 /etc/ipsec.secrets
+  changed_when: true
+  when: "'routers' in group_names or device_type == 'router'"
+
+- name: Restart IPsec service on routers
+  raw: |
+    ipsec restart || ipsec start
+    ipsec statusall || true
+  changed_when: false
+  when: "'routers' in group_names or device_type == 'router'"

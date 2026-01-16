@@ -34,7 +34,7 @@
     rm -f "$tmp"
   register: frr_config
   changed_when: "'CHANGED' in frr_config.stdout"
-  when: "'routers' in group_names"
+  when: "'routers' in group_names or device_type == 'router'"
 
 - name: Restart FRR daemons on routers
   raw: |
@@ -42,17 +42,23 @@
     pkill zebra bgpd ripd ospfd staticd mgmtd 2>/dev/null || true
     rm -f /var/run/frr/*.pid
     /usr/lib/frr/frrinit.sh start
-  when: "'routers' in group_names and frr_config is changed"
+  when: "('routers' in group_names or device_type == 'router') and frr_config is changed"
+
+- name: Normalize router hostname in running config
+  raw: |
+    vtysh -c 'configure terminal' -c 'hostname {{ inventory_hostname }}' -c 'write memory'
+  changed_when: false
+  when: "'routers' in group_names or device_type == 'router'"
 
 - name: Display router OSPF configuration
   raw: vtysh -c 'show running-config'
   register: running_config
   changed_when: false
-  when: "'routers' in group_names"
+  when: "'routers' in group_names or device_type == 'router'"
 
 - name: Show router running config summary
   debug:
     msg: |
       Router {{ inventory_hostname }} OSPF Configuration:
       {{ running_config.stdout_lines | join('\n') | truncate(500) }}
-  when: "'routers' in group_names and running_config is defined"
+  when: "('routers' in group_names or device_type == 'router') and running_config is defined"
