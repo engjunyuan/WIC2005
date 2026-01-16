@@ -11,35 +11,6 @@
   register: frr_config
   when: "'routers' in group_names or device_type == 'router'"
 
-- name: Prepare Batfish snapshot with rendered config (optional)
-  when: ("'routers' in group_names or device_type == 'router'") and (batfish_enabled | default(false))
-  block:
-    - name: Read rendered FRR config from router
-      slurp:
-        path: /etc/frr/frr.conf
-      register: frr_conf_slurp
-
-    - name: Ensure Batfish snapshot directory exists
-      file:
-        path: "{{ playbook_dir }}/batfish/snapshots/{{ inventory_hostname }}/configs"
-        state: directory
-        mode: "0755"
-      delegate_to: localhost
-
-    - name: Save FRR config to Batfish snapshot
-      copy:
-        dest: "{{ playbook_dir }}/batfish/snapshots/{{ inventory_hostname }}/configs/frr.conf"
-        content: "{{ frr_conf_slurp.content | b64decode }}"
-        mode: "0644"
-      delegate_to: localhost
-
-    - name: Run Batfish placeholder validation
-      delegate_to: localhost
-      shell: |
-        echo "Batfish validation placeholder for {{ inventory_hostname }}"
-        echo "Plug in bf_init_snapshot / bf_answer checks here."
-      changed_when: false
-
 - name: Restart FRR daemons on routers
   raw: |
     killall watchfrr 2>/dev/null || true
