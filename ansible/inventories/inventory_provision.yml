@@ -2,19 +2,26 @@ all:
   children:
     new_branch:
       hosts:
-        branch-router1:
+        router4:
           device_type: router
-          mgmt_ip: 172.199.0.50
-          wan_ip: 10.0.2.2
+          mgmt_ip: 172.199.0.30
+          wan_ip: 10.0.1.5
+          lan_ip: 192.168.11.30
           ospf_area: 0.0.0.0
           ansible_host: 127.0.0.1
           ansible_port: 2301
-        branch-switch1:
+        switch3:
           device_type: switch
-          mgmt_ip: 172.199.0.60
+          mgmt_ip: 172.199.0.31
+          lan_ip: 192.168.11.31
           ansible_host: 127.0.0.1
           ansible_port: 2321
           vlans:
             - { id: 10, name: "Management" }
             - { id: 20, name: "Data" }
   vars:
+    ansible_user: root
+    ansible_ssh_pass: netdev123
+    ansible_connection: ssh
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'

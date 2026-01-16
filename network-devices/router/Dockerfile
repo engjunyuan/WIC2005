@@ -4,6 +4,9 @@ FROM alpine:3.19
 RUN apk add --no-cache \
     frr \
     frr-openrc \
+    vlan \
+    iptables \
+    strongswan \
     openssh \
     iproute2 \
     tcpdump \
@@ -21,6 +24,10 @@ RUN echo "root:netdev123" | chpasswd && \
 # Enable IP forwarding
 RUN echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf && \
     echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
+
+# Load VLAN and netfilter modules (required for trunking, ACLs, NAT, IPSec)
+RUN echo "8021q" > /etc/modules-load.d/networking.conf && \
+    printf "%s\n" nf_conntrack nf_nat iptable_filter iptable_nat xfrm_user xfrm_algo esp4 > /etc/modules-load.d/netfilter.conf
 
 # FRR daemons config
 RUN mkdir -p /etc/frr && \

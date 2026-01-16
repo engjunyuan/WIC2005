@@ -449,6 +449,18 @@ cat ../reports/*_*.md
 ### Phase 5: Manual Verification (Optional)
 
 ```bash
+# Step 5.0: Verify configs inside containers
+# Router (FRR)
+ssh -p 2201 root@localhost
+vtysh -c "show running-config"
+exit
+
+# Switch (bridge/VLAN)
+ssh -p 2221 root@localhost
+cat /config/vlans.conf
+brctl show
+exit
+
 # Step 5.1: Test OSPF routing
 docker compose exec router1 vtysh -c "show ip ospf neighbor"
 docker compose exec router1 vtysh -c "show ip route"
@@ -778,6 +790,23 @@ ssh -p 2221 root@localhost    # switch1
 ssh -p 2222 root@localhost    # switch2
 ```
 
+### Add a New Device Container
+
+```bash
+./scripts/add_device.sh --type router --name router4 --ssh-port 2204 --mgmt-ip 172.199.0.13 --wan-ip 10.0.1.5 --lan-ip 192.168.11.12
+./scripts/add_device.sh --type switch --name switch3 --ssh-port 2223 --mgmt-ip 172.199.0.22 --lan-ip 192.168.11.22
+```
+
+The script prints an inventory snippet you can paste into `ansible/inventories/inventory.yml`.
+
+### Add a New Branch Pair (Router + Switch)
+
+```bash
+./scripts/new_branch.sh
+```
+
+This adds a branch router and switch connected to the hub router via the WAN network and prints an inventory snippet.
+
 **Password:** `netdev123` or `root` (container-specific)
 
 ### Docker Exec Access
@@ -863,7 +892,9 @@ brctl showmacs br0
 │       └── entrypoint.sh              # Switch startup script
 ├── scripts/
 │   ├── connect.sh                     # Quick device SSH access
-│   └── run_automation.sh              # Run Ansible from host
+│   ├── run_automation.sh              # Run Ansible from host
+│   ├── add_device.sh                  # Add a new device container
+│   └── new_branch.sh                  # Add a router+switch branch pair
 ├── configs/
 │   ├── router-common/                 # Shared FRR daemon config
 │   │   ├── daemons

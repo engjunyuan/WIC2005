@@ -86,3 +86,20 @@ ansible-playbook -i inventories/inventory_provision.yml provision_devices.yml -v
 
 Inventory reference:
 - `ansible/inventories/inventory_provision.yml` defines the `new_branch` group.
+
+## Manual verification (inside containers)
+
+Use SSH to enter a device and confirm configs were applied.
+
+```bash
+# Router (FRR)
+ssh -p 2201 root@localhost
+vtysh -c "show running-config"
+exit
+
+# Switch (bridge/VLAN)
+ssh -p 2221 root@localhost
+cat /config/vlans.conf
+brctl show
+exit
+```
