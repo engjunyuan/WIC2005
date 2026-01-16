@@ -4,8 +4,9 @@
 - name: Set monitoring timestamp
   set_fact:
     monitoring_timestamp: "{{ lookup('pipe', 'date +%s') }}"
+    report_time_local: "{{ lookup('pipe', 'TZ=Asia/Kuala_Lumpur date +%Y-%m-%d\\ %H:%M:%S\\ MYT') }}"
+    report_time_filename: "{{ lookup('pipe', 'TZ=Asia/Kuala_Lumpur date +%Y%m%d_%H%M%S') }}"
   run_once: true
-  delegate_to: localhost
 
 # ============================================================
 # INTERFACE HEALTH MONITORING
@@ -171,9 +172,7 @@
 - name: Generate health monitoring report
   template:
     src: health_report.md.j2
-    dest: "{{ playbook_dir }}/../reports/health/{{ ansible_date_time }}_health_report.md"
-  vars:
-    ansible_date_time: "{{ lookup('pipe', 'date -u +%Y%m%d_%H%M%S') }}"
+    dest: "{{ playbook_dir }}/../reports/health/{{ report_time_filename }}_health_report.md"
   delegate_to: localhost
   run_once: true
   ignore_errors: yes
@@ -184,7 +183,7 @@
       ========================================
       HEALTH MONITORING SUMMARY
       ========================================
-      Timestamp: {{ ansible_date_time }}
+      Timestamp: {{ report_time_local }}
       
       Metrics Collected:
         ✓ Interface Statistics

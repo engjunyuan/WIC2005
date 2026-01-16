@@ -1,10 +1,10 @@
 # Security Verification Report
-**Generated:** {{ ansible_date_time }}
+**Generated:** {{ report_time_local }}
 
 ## Security Audit Summary
 
 ### Audit Scope
-- **Audit Date:** {{ ansible_date_time }}
+- **Audit Date:** {{ report_time_local }}
 - **Devices Audited:** {{ groups['all'] | length }}
 - **Routers:** {{ groups['routers'] | length }}
 - **Switches:** {{ groups['switches'] | length }}

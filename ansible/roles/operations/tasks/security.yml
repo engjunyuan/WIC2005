@@ -4,8 +4,9 @@
 - name: Set security audit timestamp
   set_fact:
     security_audit_timestamp: "{{ lookup('pipe', 'date +%s') }}"
+    report_time_local: "{{ lookup('pipe', 'TZ=Asia/Kuala_Lumpur date +%Y-%m-%d\\ %H:%M:%S\\ MYT') }}"
+    report_time_filename: "{{ lookup('pipe', 'TZ=Asia/Kuala_Lumpur date +%Y%m%d_%H%M%S') }}"
   run_once: true
-  delegate_to: localhost
 
 # ============================================================
 # ACL VERIFICATION (ROUTERS)
@@ -193,9 +194,7 @@
 - name: Generate security verification report
   template:
     src: security_report.md.j2
-    dest: "{{ playbook_dir }}/../reports/security/{{ ansible_date_time }}_security_report.md"
-  vars:
-    ansible_date_time: "{{ lookup('pipe', 'date -u +%Y%m%d_%H%M%S') }}"
+    dest: "{{ playbook_dir }}/../reports/security/{{ report_time_filename }}_security_report.md"
   delegate_to: localhost
   run_once: true
   ignore_errors: yes
@@ -206,7 +205,7 @@
       ========================================
       SECURITY VERIFICATION SUMMARY
       ========================================
-      Timestamp: {{ ansible_date_time }}
+      Timestamp: {{ report_time_local }}
       
       Security Checks:
         ✓ ACL Configurations Verified

@@ -12,8 +12,9 @@
   set_fact:
     validation_timestamp: "{{ lookup('pipe', 'date +%s') }}"
     validation_results: {}
+    report_time_local: "{{ lookup('pipe', 'TZ=Asia/Kuala_Lumpur date +%Y-%m-%d\\ %H:%M:%S\\ MYT') }}"
+    report_time_filename: "{{ lookup('pipe', 'TZ=Asia/Kuala_Lumpur date +%Y%m%d_%H%M%S') }}"
   run_once: true
-  delegate_to: localhost
 
 # ============================================================
 # CONNECTIVITY TESTS
@@ -169,9 +170,7 @@
 - name: Generate validation summary
   template:
     src: validation_report.md.j2
-    dest: "{{ playbook_dir }}/../reports/validation/{{ ansible_date_time.iso8601_basic_short }}_validation_report.md"
-  vars:
-    ansible_date_time: "{{ lookup('pipe', 'date -u +%Y%m%dT%H%M%S') }}"
+    dest: "{{ playbook_dir }}/../reports/validation/{{ report_time_filename }}_validation_report.md"
   delegate_to: localhost
   run_once: true
   ignore_errors: yes
@@ -182,7 +181,7 @@
       ========================================
       POST-DEPLOYMENT VALIDATION SUMMARY
       ========================================
-      Timestamp: {{ ansible_date_time.iso8601_basic }}
+      Timestamp: {{ report_time_local }}
       Devices Checked: {{ groups.get('all', []) | length }}
       
       Routers:

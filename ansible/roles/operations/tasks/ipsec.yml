@@ -1,0 +1,54 @@
+---
+# IPSEC STATUS CHECKS (strongSwan)
+
+- name: Set IPsec report timestamp
+  set_fact:
+    ipsec_report_time_local: "{{ lookup('pipe', 'TZ=Asia/Kuala_Lumpur date +%Y-%m-%d\\ %H:%M:%S\\ MYT') }}"
+    ipsec_report_filename: "{{ lookup('pipe', 'TZ=Asia/Kuala_Lumpur date +%Y%m%d_%H%M%S') }}"
+  run_once: true
+
+- name: Collect IPsec status on routers
+  raw: ipsec statusall
+  register: ipsec_status
+  changed_when: false
+  ignore_errors: yes
+  when: "'routers' in group_names or device_type == 'router'"
+
+- name: Parse established IPsec tunnels
+  set_fact:
+    ipsec_established_lines: "{{ ipsec_status.stdout_lines | select('search', 'ESTABLISHED') | list }}"
+    ipsec_installed_lines: "{{ ipsec_status.stdout_lines | select('search', 'INSTALLED') | list }}"
+  when: "'routers' in group_names or device_type == 'router'"
+
+- name: Create IPsec report directory
+  file:
+    path: "{{ playbook_dir }}/../reports/ipsec"
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+- name: Generate IPsec status report
+  template:
+    src: ipsec_status_report.md.j2
+    dest: "{{ playbook_dir }}/../reports/ipsec/{{ ipsec_report_filename }}_ipsec_report.md"
+  delegate_to: localhost
+  run_once: true
+  ignore_errors: yes
+
+- name: Display IPsec status summary
+  debug:
+    msg: |
+      ========================================
+      IPSEC STATUS SUMMARY
+      ========================================
+      Report: reports/ipsec/{{ ipsec_report_filename }}_ipsec_report.md
+      Routers checked:
+      {% for host in groups.get('all', []) | sort %}
+      {% set is_router = ('routers' in hostvars[host].group_names) or (hostvars[host].device_type | default('') == 'router') %}
+      {% if is_router %}
+        - {{ host }}
+      {% endif %}
+      {% endfor %}
+      ========================================
+  run_once: true
+  ignore_errors: yes

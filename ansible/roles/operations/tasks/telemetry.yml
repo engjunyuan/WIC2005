@@ -3,7 +3,8 @@
 
 - name: Set report timestamp
   set_fact:
-    report_timestamp: "{{ lookup('pipe', 'date -u +%F') }}"
+    report_timestamp: "{{ lookup('pipe', 'TZ=Asia/Kuala_Lumpur date +%Y-%m-%d\\ %H:%M:%S\\ MYT') }}"
+    report_timestamp_filename: "{{ lookup('pipe', 'TZ=Asia/Kuala_Lumpur date +%Y%m%d_%H%M%S') }}"
     report_title: "Telemetry Report"
 
 - name: Create report directory
@@ -95,5 +96,5 @@
 - name: Write formatted report
   template:
     src: report.md.j2
-    dest: "{{ playbook_dir }}/../reports/{{ inventory_hostname }}_{{ report_timestamp | regex_replace('[-:]', '') }}.md"
+    dest: "{{ playbook_dir }}/../reports/{{ inventory_hostname }}_{{ report_timestamp_filename }}.md"
   delegate_to: localhost

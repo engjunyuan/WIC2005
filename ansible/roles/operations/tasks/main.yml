@@ -16,3 +16,7 @@
 - name: Include security tasks
   import_tasks: security.yml
   tags: [security]
+
+- name: Include IPsec status tasks
+  import_tasks: ipsec.yml
+  tags: [ipsec]
